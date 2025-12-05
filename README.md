@@ -33,7 +33,7 @@
 
 ## 🚀 Installation
 
-1. **Télécharger :** Récupérez le fichier `nexus_v16.html`.
+1. **Télécharger :** Récupérez le fichier `nexus_NET.html`.
 2. **Lancer :** Double-cliquez simplement sur le fichier pour l'ouvrir dans votre navigateur web favori (Chrome, Firefox, Edge, Brave).
 3. **Prérequis :** Une connexion internet est requise lors de l'ouverture pour charger les librairies graphiques (Vis.js, FontAwesome).
 
