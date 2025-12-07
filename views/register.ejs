@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - Nexus Net</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/" class="logo">NEXUS NET</a>
+        </nav>
+
+        <div class="auth-container">
+            <div class="auth-title">Créer un compte</div>
+            
+            <% if (error) { %>
+                <div class="error-msg"><%= error %></div>
+            <% } %>
+
+            <form action="/register" method="POST">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">S'inscrire</button>
+            </form>
+            <p style="text-align: center; margin-top: 20px; color: var(--text-secondary);">
+                Déjà un compte ? <a href="/login" style="color: var(--accent-blue);">Se connecter</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

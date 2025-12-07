@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nexus Net</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/" class="logo">NEXUS NET</a>
+            <div class="nav-links">
+                <span class="nav-link">Bonjour, <%= user.username %></span>
+                <a href="/logout" class="nav-link">Déconnexion</a>
+            </div>
+        </nav>
+
+        <div class="dashboard-header">
+            <h2>Mes Plans</h2>
+            <form action="/plans/create" method="POST" style="margin: 0;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="name" placeholder="Nom du nouveau plan" required style="width: 200px; margin-bottom: 0;">
+                    <button type="submit" class="btn btn-primary btn-small">Créer un nouveau plan</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="plans-grid">
+            <% if (plans.length === 0) { %>
+                <p style="color: var(--text-secondary);">Vous n'avez aucun plan pour le moment.</p>
+            <% } else { %>
+                <% plans.forEach(function(plan) { %>
+                    <div class="plan-card">
+                        <div class="plan-title"><%= plan.name %></div>
+                        <div class="plan-date">Créé le <%= new Date(plan.created_at).toLocaleDateString() %></div>
+                        <a href="/editor/<%= plan.id %>" class="btn btn-primary btn-small">Ouvrir</a>
+                    </div>
+                <% }); %>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

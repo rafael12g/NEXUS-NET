@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Net - Network Visualization</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo">NEXUS NET</div>
+            <div class="nav-links">
+                <% if (user) { %>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/logout" class="nav-link">Déconnexion</a>
+                <% } else { %>
+                    <a href="/login" class="nav-link">Connexion</a>
+                    <a href="/register" class="nav-link">Inscription</a>
+                <% } %>
+            </div>
+        </nav>
+
+        <div class="hero">
+            <h1>Visualisez vos réseaux complexes</h1>
+            <p>Nexus Net est l'outil ultime pour créer, gérer et visualiser des architectures réseau, des diagrammes de flux et des connexions complexes.</p>
+            
+            <div class="cta-buttons">
+                <% if (user) { %>
+                    <a href="/dashboard" class="btn btn-primary btn-small">Accéder au Dashboard</a>
+                <% } else { %>
+                    <a href="/register" class="btn btn-primary btn-small">Commencer Gratuitement</a>
+                    <a href="/login" class="btn btn-secondary btn-small">Se Connecter</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
