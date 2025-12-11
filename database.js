@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = path.resolve(__dirname, 'nexus.db');
+const dbPath = path.resolve(__dirname, 'nexus-net.db');
 const schemaPath = path.resolve(__dirname, 'schema.sql');
 
 const db = new sqlite3.Database(dbPath, (err) => {
