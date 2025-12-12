@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Nexus Net - <%= plan.name %></title>
+    
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- THEME UNIVERSAL --- */
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.96);
+            --border-color: rgba(148, 163, 184, 0.2);
+            --accent-blue: #38bdf8; 
+            --accent-purple: #c084fc;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --accent-orange: #fbbf24;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            margin: 0; height: 100vh; overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(#334155 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- UI HELPERS --- */
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-blue), #2563eb); color: white; box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(56, 189, 248, 0.5); }
+        
+        .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.1); color: white; border-color: var(--accent-blue); }
+        
+        .btn-drawio { background: #f08705; color: white; border: 1px solid #d97706; }
+        .btn-drawio:hover { background: #d97706; }
+
+        .btn-icon { padding: 8px; width: 36px; height: 36px; font-size: 16px; border-radius: 6px; }
+        .btn-icon.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+
+        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 13px; box-sizing: border-box; margin-bottom: 8px; }
+        input:focus { outline: none; border-color: var(--accent-blue); background: rgba(0,0,0,0.5); }
+        label { font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- DRAG & DROP OVERLAY --- */
+        #dropZone {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95); z-index: 999; display: none;
+            align-items: center; justify-content: center; flex-direction: column;
+            border: 5px dashed var(--accent-blue); box-sizing: border-box;
+        }
+        #dropZone h1 { color: var(--accent-blue); font-size: 30px; pointer-events: none; }
+
+        /* --- TOP BAR --- */
+        #topbar {
+            position: absolute; top: 20px; left: 340px; right: 20px;
+            display: flex; justify-content: space-between; pointer-events: none; z-index: 50;
+        }
+        .tool-group {
+            pointer-events: auto; background: var(--panel-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 5px 10px;
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            width: 300px; background: var(--panel-bg); border-right: 1px solid var(--border-color);
+            padding: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 100; 
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5); overflow-y: auto;
+        }
+        h2 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--text-primary); letter-spacing: -1px; }
+        .section-header { font-size: 11px; font-weight: 800; color: var(--accent-blue); text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-top: 15px; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;}
+
+        /* --- INSPECTOR --- */
+        #inspector {
+            position: absolute; top: 90px; right: 20px; width: 280px;
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;
+            display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 50;
+            border-left: 4px solid var(--accent-purple);
+        }
+        
+        #network-container { flex-grow: 1; position: relative; }
+        #customUploadArea { display: none; padding: 10px; border: 1px dashed var(--accent-blue); background: rgba(56, 189, 248, 0.1); border-radius: 4px; margin-bottom: 10px;}
+        
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--accent-green); color: #064e3b; padding: 10px 25px; border-radius: 30px;
+            font-weight: 700; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 900;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="dropZone">
+        <i class="fas fa-file-import" style="font-size: 60px; color: var(--accent-blue); margin-bottom: 20px;"></i>
+        <h1>Lâchez pour Ouvrir</h1>
+    </div>
+
+    <div id="toast">Projet Sauvegardé</div>
+
+    <div id="topbar">
+        <div class="tool-group">
+            <a href="/dashboard" class="btn-ghost" style="text-decoration:none; display:flex; align-items:center; gap:5px;">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <div style="width:1px; height:20px; background:var(--border-color);"></div>
+            <button class="btn-ghost btn-icon" onclick="network.fit()" title="Recentrer"><i class="fas fa-compress-arrows-alt"></i></button>
+            <button class="btn-ghost btn-icon" onclick="toggleGrid()" title="Grille"><i class="fas fa-border-all"></i></button>
+            <button class="btn-ghost btn-icon" onclick="toggleMagnet()" id="btnMagnet" title="Aimant (Alignement Auto)"><i class="fas fa-magnet"></i></button>
+            <div style="width:1px; height:20px; background:var(--border-color);"></div>
+            <button class="btn-ghost btn-icon" onclick="alignNodes('UD')" title="Aligner Verticalement"><i class="fas fa-arrows-alt-v"></i></button>
+            <button class="btn-ghost btn-icon" onclick="alignNodes('LR')" title="Aligner Horizontalement"><i class="fas fa-arrows-alt-h"></i></button>
+        </div>
+        <div class="tool-group">
+            <i class="fas fa-search" style="color: #64748b;"></i>
+            <input type="text" id="searchNode" placeholder="Rechercher..." style="width: 150px; margin:0; border:none; background:transparent;" oninput="searchNetwork()">
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <h2><i class="fas fa-globe" style="color:var(--accent-green)"></i> NEXUS NET</h2>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;"><%= plan.name %></div>
+        
+        <div class="section-header">Création</div>
+        
+        <label>Nom</label>
+        <input type="text" id="nodeLabel" placeholder="ex: Serveur Web">
+        <label>IP</label>
+        <input type="text" id="nodeIP" placeholder="10.0.0.1">
+
+        <div style="display:flex; gap:8px;">
+            <div style="flex:2">
+                <label>Type</label>
+                <select id="nodeType" onchange="toggleUpload()">
+                    <optgroup label="Infra">
+                        <option value="server">Serveur</option>
+                        <option value="router">Routeur</option>
+                        <option value="switch">Switch</option>
+                        <option value="firewall">Firewall</option>
+                        <option value="cloud">Internet</option>
+                        <option value="db">Database</option>
+                    </optgroup>
+                    <optgroup label="Utilisateurs">
+                        <option value="pc">PC</option>
+                        <option value="printer">Imprimante</option>
+                        <option value="wifi">Wifi</option>
+                    </optgroup>
+                    <optgroup label="Organisation">
+                        <option value="note">📝 Zone / Note</option>
+                    </optgroup>
+                    <optgroup label="Perso">
+                        <option value="custom">⭐ Image...</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div style="flex:1">
+                <label>Couleur</label>
+                <input type="color" id="nodeColor" value="#38bdf8" style="height:40px; padding:2px; cursor:pointer;">
+            </div>
+        </div>
+
+        <div id="customUploadArea">
+            <input type="file" id="customImg" accept="image/*">
+        </div>
+
+        <button class="btn-primary" onclick="addNode()">
+            <i class="fas fa-plus"></i> AJOUTER
+        </button>
+
+        <div class="section-header">
+            Connexion
+            <button class="btn-ghost" onclick="connectSelectedNodes()" title="Lier sélection" style="padding: 4px 8px; font-size:10px;">
+                <i class="fas fa-bolt" style="color:var(--accent-orange)"></i>
+            </button>
+        </div>
+
+        <div style="display:flex; gap:5px;">
+            <select id="fromNode"><option>Src...</option></select>
+            <select id="toNode"><option>Dst...</option></select>
+        </div>
+        <button class="btn-ghost" onclick="addEdge()" style="width:100%; justify-content:center;">
+            <i class="fas fa-link"></i> CONNECTER
+        </button>
+
+        <div class="section-header">Exports</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+            <button class="btn-ghost" onclick="savePlan(true)"><i class="fas fa-save"></i> Save</button>
+            <button class="btn-ghost" onclick="triggerLoad()"><i class="fas fa-folder-open"></i> Ouvrir</button>
+            <button class="btn-drawio" onclick="exportDrawIO()" style="grid-column: span 2;">
+                <i class="fas fa-shapes"></i> Export vers Draw.io
+            </button>
+            <button class="btn-ghost" onclick="exportJSON()">JSON</button>
+            <button class="btn-ghost" onclick="exportPDF()">PDF</button>
+        </div>
+        
+        <input type="file" id="fileLoader" style="display:none;" onchange="loadJSONFromFile(this)">
+    </div>
+
+    <div id="network-container" class="grid-bg"></div>
+
+    <div id="inspector">
+        <div id="insp-content-node" style="display:none;">
+            <div class="section-header" style="margin-top:0">Modifier Appareil</div>
+            
+            <label>Nom</label>
+            <input type="text" id="edit-name" oninput="updateNode()">
+            <label>IP</label>
+            <input type="text" id="edit-ip" oninput="updateNode()">
+            <label>Couleur</label>
+            <input type="color" id="edit-color" style="height:35px; padding:0;" oninput="updateNode()">
+            <label>Opacité <span id="opacity-val" style="float:right">100%</span></label>
+            <input type="range" id="edit-opacity" min="0" max="100" value="100" oninput="updateNode()">
+            <label>Taille</label>
+            <input type="range" id="edit-size" min="20" max="300" oninput="updateNode()">
+        </div>
+
+        <div id="insp-content-edge" style="display:none;">
+            <div class="section-header" style="margin-top:0">Modifier Câble</div>
+            <label>Style</label>
+            <select id="edit-edge-type" onchange="updateEdge()">
+                <option value="solid">Solide</option>
+                <option value="dashed">Pointillés</option>
+            </select>
+            <label>Couleur</label>
+            <input type="color" id="edit-edge-color" style="height:35px; padding:0;" oninput="updateEdge()">
+            <label>Épaisseur</label>
+            <input type="range" id="edit-edge-width" min="1" max="10" oninput="updateEdge()">
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:10px;">
+            <button class="btn-danger" style="flex:1;" onclick="deleteSelected()"><i class="fas fa-trash"></i></button>
+            <button class="btn-ghost" style="flex:1;" onclick="closeInspector()">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        const icons = {
+            server: {code:'\uf233', fa:'fa-solid fa-server'},
+            router: {code:'\uf0ec', fa:'fa-solid fa-network-wired'},
+            switch: {code:'\uf2db', fa:'fa-solid fa-microchip'},
+            firewall: {code:'\uf132', fa:'fa-solid fa-shield-halved'},
+            cloud: {code:'\uf0c2', fa:'fa-solid fa-cloud'},
+            db: {code:'\uf1c0', fa:'fa-solid fa-database'},
+            pc: {code:'\uf108', fa:'fa-solid fa-desktop'},
+            printer: {code:'\uf02f', fa:'fa-solid fa-print'},
+            wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
+            note: {code:'\uf249', fa:'fa-solid fa-sticky-note'}
+        };
+
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        let network = null;
+        let selectedNodeId = null;
+        let selectedEdgeId = null;
+        let customImgBase64 = null;
+        let magnetMode = false;
+        
+        const planId = "<%= plan.id %>";
+        // Use a safe way to inject JSON
+        const rawPlanData = <%- plan.data ? JSON.stringify(plan.data) : 'null' %>;
+
+        window.onload = function() {
+            // Load from DB
+            if(rawPlanData) {
+                try {
+                    let parsed = rawPlanData;
+                    if (typeof rawPlanData === 'string') {
+                        parsed = JSON.parse(rawPlanData);
+                    }
+                    if (parsed.nodes) nodes.add(parsed.nodes);
+                    if (parsed.edges) edges.add(parsed.edges);
+                    updateSelects(); 
+                } catch(e) {
+                    console.error("Error loading plan data", e);
+                }
+            }
+
+            const container = document.getElementById('network-container');
+            const data = { nodes, edges };
+            const options = {
+                nodes: {
+                    shape: 'icon',
+                    icon: { face: "'Font Awesome 6 Free'", weight: "900", size: 45, color: '#fff' },
+                    font: { face: 'Inter', color: '#fff', size: 14, strokeWidth: 4, strokeColor: '#0f172a', multi: 'html' },
+                    shadow: { enabled: true, color: 'rgba(0,0,0,0.5)' }
+                },
+                edges: {
+                    width: 2,
+                    color: { color: '#64748b', highlight: '#38bdf8' },
+                    smooth: { type: 'continuous', roundness: 0.2 }
+                },
+                physics: { stabilization: false, barnesHut: { gravitationalConstant: -2500 } },
+                interaction: { hover: true, multiselect: true, navigationButtons: false }
+            };
+
+            network = new vis.Network(container, data, options);
+
+            // Events
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) openNodeInspector(params.nodes[0]);
+                else if (params.edges.length > 0) openEdgeInspector(params.edges[0]);
+                else closeInspector();
+            });
+
+            network.on("dragEnd", function(params) {
+                if(magnetMode && params.nodes.length > 0) {
+                    snapToGrid(params.nodes);
+                }
+                savePlan(false);
+            });
+
+            // Auto-save every 30s
+            setInterval(() => savePlan(false), 30000);
+
+            document.getElementById('customImg').addEventListener('change', e => {
+                const f = e.target.files[0];
+                if(f) { const r = new FileReader(); r.onload=ev=>customImgBase64=ev.target.result; r.readAsDataURL(f); }
+            });
+
+            document.addEventListener('keydown', e => { if(e.key==="Delete") deleteSelected(); });
+
+            // Drag Drop
+            const dz = document.getElementById('dropZone');
+            document.body.addEventListener('dragover', e => { e.preventDefault(); dz.style.display='flex'; });
+            dz.addEventListener('dragleave', e => { e.preventDefault(); dz.style.display='none'; });
+            dz.addEventListener('drop', e => {
+                e.preventDefault(); dz.style.display='none';
+                const file = e.dataTransfer.files[0];
+                if(file && file.name.endsWith('.json')) loadFile(file);
+            });
+        };
+
+        // --- ALIGNMENT TOOLS ---
+        function toggleMagnet() {
+            magnetMode = !magnetMode;
+            const btn = document.getElementById('btnMagnet');
+            if(magnetMode) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+
+        function snapToGrid(nodeIds) {
+            const gridSize = 40;
+            const positions = network.getPositions(nodeIds);
+            const updates = [];
+            nodeIds.forEach(id => {
+                let x = Math.round(positions[id].x / gridSize) * gridSize;
+                let y = Math.round(positions[id].y / gridSize) * gridSize;
+                updates.push({id: id, x: x, y: y});
+            });
+            nodes.update(updates);
+        }
+
+        function alignNodes(direction) {
+            const selected = network.getSelectedNodes();
+            if(selected.length < 2) return alert("Sélectionnez au moins 2 noeuds.");
+            
+            const positions = network.getPositions(selected);
+            let targetVal = 0;
+
+            if(direction === 'UD') { // Vertical Alignment (same X)
+                let sumX = 0;
+                selected.forEach(id => sumX += positions[id].x);
+                targetVal = sumX / selected.length;
+                const updates = selected.map(id => ({id: id, x: targetVal}));
+                nodes.update(updates);
+            } else { // Horizontal Alignment (same Y)
+                let sumY = 0;
+                selected.forEach(id => sumY += positions[id].y);
+                targetVal = sumY / selected.length;
+                const updates = selected.map(id => ({id: id, y: targetVal}));
+                nodes.update(updates);
+            }
+            savePlan(false);
+        }
+
+        // --- DRAW.IO EXPORT LOGIC ---
+        function exportDrawIO() {
+            const allNodes = nodes.get();
+            const allEdges = edges.get();
+            const positions = network.getPositions(allNodes.map(n => n.id));
+
+            let xml = '<?xml version="1.0" encoding="UTF-8"?>';
+            xml += '<mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">';
+            xml += '<root><mxCell id="0"/><mxCell id="1" parent="0"/>';
+
+            allNodes.forEach(n => {
+                const pos = positions[n.id];
+                // Conversion couleur Hex
+                let color = n.color ? (n.color.background || n.color) : '#ffffff';
+                let label = n._data.name;
+                
+                // Style Drawio
+                let style = "";
+                if(n.shape === 'image' && n._data.img) {
+                    // Embed image base64
+                    style = `shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=${n._data.img};`;
+                } else if (n.shape === 'box') {
+                    style = `shape=rectangle;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=${n.color.border||color};opacity=${n._data.opacity||100};`;
+                } else {
+                    // Standard shape for icons (rectangle arrondi)
+                    style = `rounded=1;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=none;fontColor=#ffffff;`;
+                }
+
+                xml += `<mxCell id="${n.id}" value="${label}" style="${style}" vertex="1" parent="1">`;
+                xml += `<mxGeometry x="${pos.x}" y="${pos.y}" width="${n.size}" height="${n.size}" as="geometry"/>`;
+                xml += `</mxCell>`;
+            });
+
+            allEdges.forEach(e => {
+                let color = e.color ? (e.color.color || e.color) : '#000000';
+                let style = `edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${color};strokeWidth=${e.width};`;
+                if(e.dashes) style += "dashed=1;";
+
+                xml += `<mxCell id="edge_${e.id}" edge="1" parent="1" source="${e.from}" target="${e.to}" style="${style}">`;
+                xml += `<mxGeometry relative="1" as="geometry"/></mxCell>`;
+            });
+
+            xml += '</root></mxGraphModel>';
+
+            downloadFile(xml, 'nexus_export.xml', 'application/xml');
+        }
+
+        // --- STANDARD FUNCTIONS ---
+        function addNode() {
+            const label = document.getElementById('nodeLabel').value || "Node";
+            const ip = document.getElementById('nodeIP').value;
+            const type = document.getElementById('nodeType').value;
+            const color = document.getElementById('nodeColor').value;
+
+            let node = {
+                id: Date.now(),
+                label: `<b>${label}</b>` + (ip ? `\n${ip}` : ""),
+                _data: { name: label, ip: ip, type: type, color: color, size: 45, opacity: 100 }
+            };
+
+            if(type === 'note') {
+                node.shape = 'box';
+                node.color = { background: color, border: color };
+                node.font = { color: '#000', size: 16, strokeWidth: 0, multi:false };
+                node.label = label;
+                node.shapeProperties = { borderDashes: false };
+            } else if(type === 'custom') {
+                if(!customImgBase64) return alert("Image !");
+                node.shape = 'image'; node.image = customImgBase64; node.size = 50;
+                node._data.isCustom = true; node._data.img = customImgBase64;
+            } else {
+                const def = icons[type] || icons.server;
+                node.icon = { code: def.code, color: color, face: "'Font Awesome 6 Free'" };
+                node._data.fa = def.fa;
+            }
+
+            nodes.add(node);
+            updateSelects(); savePlan(false);
+            document.getElementById('nodeLabel').value=""; document.getElementById('nodeIP').value="";
+        }
+
+        function connectSelectedNodes() {
+            const selection = network.getSelectedNodes();
+            if(selection.length !== 2) return alert("Sélectionnez 2 noeuds (Ctrl+Clic).");
+            edges.add({ from: selection[0], to: selection[1] });
+            savePlan(false); showToast("Lien créé");
+        }
+
+        function addEdge() {
+            const f = document.getElementById('fromNode').value;
+            const t = document.getElementById('toNode').value;
+            if(f && t && f!==t) { edges.add({ from: f, to: t }); savePlan(false); }
+        }
+
+        function openNodeInspector(id) {
+            selectedNodeId = id; selectedEdgeId = null;
+            const node = nodes.get(id);
+            const d = node._data || {};
+            document.getElementById('inspector').style.display = 'block';
+            document.getElementById('insp-content-node').style.display = 'block';
+            document.getElementById('insp-content-edge').style.display = 'none';
+
+            document.getElementById('edit-name').value = d.name || "";
+            document.getElementById('edit-ip').value = d.ip || "";
+            document.getElementById('edit-color').value = d.color || "#ffffff";
+            let op = d.opacity !== undefined ? d.opacity : 100;
+            document.getElementById('edit-opacity').value = op;
+            document.getElementById('opacity-val').innerText = op + "%";
+            let s = node.size || (node.icon ? node.icon.size : 40);
+            if(node.font && node.shape === 'box') s = node.font.size;
+            document.getElementById('edit-size').value = s;
+        }
+
+        function updateNode() {
+            if(!selectedNodeId) return;
+            const name = document.getElementById('edit-name').value;
+            const ip = document.getElementById('edit-ip').value;
+            const color = document.getElementById('edit-color').value;
+            const size = parseInt(document.getElementById('edit-size').value);
+            const opacity = parseInt(document.getElementById('edit-opacity').value);
+            document.getElementById('opacity-val').innerText = opacity + "%";
+
+            const node = nodes.get(selectedNodeId);
+            const d = node._data || {};
+            let updateObj = { id: selectedNodeId, _data: {...d, name, ip, color, size, opacity} };
+            
+            function hexToRgba(hex, alpha) {
+                let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            const alpha = opacity / 100;
+
+            if(node.shape === 'box') {
+                updateObj.label = name;
+                updateObj.color = { background: hexToRgba(color, alpha), border: color };
+                updateObj.font = { ...node.font, size: size };
+            } else {
+                updateObj.label = `<b>${name}</b>` + (ip ? `\n${ip}` : "");
+                if(node.shape === 'image') updateObj.size = size;
+                else updateObj.icon = { ...node.icon, color: hexToRgba(color, alpha), size: size };
+            }
+            nodes.update(updateObj);
+            savePlan(false);
+        }
+
+        function openEdgeInspector(id) {
+            selectedEdgeId = id; selectedNodeId = null;
+            const edge = edges.get(id);
+            document.getElementById('inspector').style.display='block';
+            document.getElementById('insp-content-node').style.display='none';
+            document.getElementById('insp-content-edge').style.display='block';
+            document.getElementById('edit-edge-color').value = edge.color ? (edge.color.color||edge.color) : '#64748b';
+            document.getElementById('edit-edge-width').value = edge.width || 2;
+        }
+
+        function updateEdge() {
+            if(!selectedEdgeId) return;
+            const c = document.getElementById('edit-edge-color').value;
+            const w = parseInt(document.getElementById('edit-edge-width').value);
+            const t = document.getElementById('edit-edge-type').value;
+            edges.update({ id: selectedEdgeId, color:{color:c, highlight:c}, width:w, dashes: t==='dashed' });
+            savePlan(false);
+        }
+
+        function deleteSelected() {
+            if(selectedNodeId) { nodes.remove(selectedNodeId); updateSelects(); }
+            if(selectedEdgeId) edges.remove(selectedEdgeId);
+            closeInspector(); savePlan(false);
+        }
+
+        function closeInspector() { document.getElementById('inspector').style.display='none'; selectedNodeId=null; selectedEdgeId=null; network.unselectAll(); }
+        
+        function savePlan(notif) { 
+            const data = { nodes: nodes.get(), edges: edges.get() };
+            fetch('/api/save/' + planId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: data })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    if (notif) showToast("Sauvegardé sur le serveur");
+                } else {
+                    showToast("Erreur de sauvegarde");
+                }
+            })
+            .catch(err => showToast("Erreur réseau"));
+        }
+
+        function triggerLoad() { document.getElementById('fileLoader').click(); }
+        function loadJSONFromFile(input) { loadFile(input.files[0]); }
+        function loadFile(file) {
+            if(!file) return; const r = new FileReader();
+            r.onload = e => { try { const d = JSON.parse(e.target.result); nodes.clear(); edges.clear(); nodes.add(d.nodes); edges.add(d.edges); updateSelects(); showToast("Ouvert"); savePlan(false); } catch(err) { alert("Invalide"); } };
+            r.readAsText(file);
+        }
+        function toggleFullscreen() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+        function toggleGrid() { document.getElementById('network-container').classList.toggle('grid-bg'); }
+        function toggleUpload() { const val = document.getElementById('nodeType').value; document.getElementById('customUploadArea').style.display = (val==='custom')?'block':'none'; }
+        function updateSelects() {
+            const s1=document.getElementById('fromNode'), s2=document.getElementById('toNode');
+            s1.innerHTML='<option>De...</option>'; s2.innerHTML='<option>Vers...</option>';
+            nodes.get().forEach(n=>{ let op=`<option value="${n.id}">${n._data?n._data.name:n.label}</option>`; s1.innerHTML+=op; s2.innerHTML+=op; });
+        }
+        function showToast(m) { const t=document.getElementById('toast'); t.innerHTML=m; t.style.opacity=1; t.style.bottom="40px"; setTimeout(()=>{t.style.opacity=0;t.style.bottom="30px";},2000); }
+        function searchNetwork() {
+            const term = document.getElementById('searchNode').value.toLowerCase();
+            if(term.length<2) return;
+            const found = nodes.get().find(n=>(n._data&&n._data.name.toLowerCase().includes(term))||(n.label&&n.label.toLowerCase().includes(term)));
+            if(found) { network.selectNodes([found.id]); network.focus(found.id,{scale:1.5,animation:true}); openNodeInspector(found.id); }
+        }
+        function exportJSON() { const d = {nodes:nodes.get(), edges:edges.get()}; const b = new Blob([JSON.stringify(d)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='nexus.json'; a.click(); }
+        function exportPDF() { network.fit({animation:false}); setTimeout(()=>{ const cvs = document.querySelector('canvas'); const pdf = new window.jspdf.jsPDF('l','mm','a4'); pdf.addImage(cvs.toDataURL("image/jpeg",1.0),'JPEG',10,10,280,150); pdf.save("schema.pdf"); },500); }
+        function downloadFile(content, name, type) { const blob = new Blob([content], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+    </script>
+</body>
+</html>
