@@ -3,6 +3,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
+require('dotenv').config();
 const db = require('./database');
 
 const app = express();
@@ -16,7 +17,7 @@ app.set('view engine', 'ejs');
 
 // Session setup
 app.use(session({
-    secret: 'nexus-secret-key-change-this',
+    secret: process.env.SESSION_SECRET || 'nexus-secret-key-change-this',
     resave: false,
     saveUninitialized: false
 }));

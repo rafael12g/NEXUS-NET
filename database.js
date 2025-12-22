@@ -1,8 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
 
-const dbPath = path.resolve(__dirname, 'nexus-net.db');
+const dbFile = process.env.DB_FILE || 'nexus.db';
+const dbPath = path.resolve(__dirname, dbFile);
 const schemaPath = path.resolve(__dirname, 'schema.sql');
 
 const db = new sqlite3.Database(dbPath, (err) => {
