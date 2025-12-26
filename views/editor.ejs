@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus Net - <%= plan.name %></title>
+    <title>Nexus-Net - <%= plan.name %></title>
     
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -33,8 +33,10 @@
         }
 
         .grid-bg {
-            background-image: radial-gradient(#334155 1px, transparent 1px);
             background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(51, 65, 85, 0.5) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(51, 65, 85, 0.5) 1px, transparent 1px);
         }
 
         /* --- UI HELPERS --- */
@@ -64,17 +66,6 @@
         }
         #dropZone h1 { color: var(--accent-blue); font-size: 30px; pointer-events: none; }
 
-        /* --- TOP BAR --- */
-        #topbar {
-            position: absolute; top: 20px; left: 340px; right: 20px;
-            display: flex; justify-content: space-between; pointer-events: none; z-index: 50;
-        }
-        .tool-group {
-            pointer-events: auto; background: var(--panel-bg); backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color); border-radius: 8px; padding: 5px 10px;
-            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        }
-
         /* --- SIDEBAR --- */
         #sidebar {
             width: 300px; background: var(--panel-bg); border-right: 1px solid var(--border-color);
@@ -86,14 +77,35 @@
 
         /* --- INSPECTOR --- */
         #inspector {
-            position: absolute; top: 90px; right: 20px; width: 280px;
+            position: absolute; top: 20px; right: 20px; width: 280px;
             background: var(--panel-bg); backdrop-filter: blur(10px);
             border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;
             display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 50;
             border-left: 4px solid var(--accent-purple);
         }
         
-        #network-container { flex-grow: 1; position: relative; }
+        #ruler-top {
+            position: absolute; top: 0; left: 0; width: 100%; height: 20px;
+            background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-color);
+            z-index: 10; pointer-events: none;
+        }
+        #ruler-left {
+            position: absolute; top: 0; left: 0; width: 20px; height: 100%;
+            background: rgba(15, 23, 42, 0.8); border-right: 1px solid var(--border-color);
+            z-index: 10; pointer-events: none;
+        }
+        #ruler-corner {
+            position: absolute; top: 0; left: 0; width: 20px; height: 20px;
+            background: rgba(15, 23, 42, 0.95); z-index: 15; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 7px; font-family: 'JetBrains Mono', monospace;
+            color: rgba(148, 163, 184, 0.4);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #workspace-wrapper { flex-grow: 1; position: relative; overflow: hidden; }
+        #network-container { width: 100%; height: 100%; }
         #customUploadArea { display: none; padding: 10px; border: 1px dashed var(--accent-blue); background: rgba(56, 189, 248, 0.1); border-radius: 4px; margin-bottom: 10px;}
         
         #toast {
@@ -101,6 +113,28 @@
             background: var(--accent-green); color: #064e3b; padding: 10px 25px; border-radius: 30px;
             font-weight: 700; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 900;
         }
+
+        /* --- LIBRARY GRID --- */
+        .category-header {
+            font-size: 10px; font-weight: 700; color: var(--text-secondary);
+            text-transform: uppercase; margin-top: 15px; margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .item-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+        .item-btn {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 10px 5px; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            transition: 0.2s; color: var(--text-secondary);
+        }
+        .item-btn:hover {
+            background: rgba(255,255,255,0.1); border-color: var(--accent-blue);
+            color: white; transform: translateY(-2px);
+        }
+        .item-btn i { font-size: 18px; margin-bottom: 4px; }
+        .item-btn span { font-size: 9px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -112,74 +146,64 @@
 
     <div id="toast">Projet Sauvegardé</div>
 
-    <div id="topbar">
-        <div class="tool-group">
-            <a href="/dashboard" class="btn-ghost" style="text-decoration:none; display:flex; align-items:center; gap:5px;">
-                <i class="fas fa-arrow-left"></i> Dashboard
-            </a>
-            <div style="width:1px; height:20px; background:var(--border-color);"></div>
-            <button class="btn-ghost btn-icon" onclick="network.fit()" title="Recentrer"><i class="fas fa-compress-arrows-alt"></i></button>
-            <button class="btn-ghost btn-icon" onclick="toggleGrid()" title="Grille"><i class="fas fa-border-all"></i></button>
-            <button class="btn-ghost btn-icon" onclick="toggleMagnet()" id="btnMagnet" title="Aimant (Alignement Auto)"><i class="fas fa-magnet"></i></button>
-            <div style="width:1px; height:20px; background:var(--border-color);"></div>
-            <button class="btn-ghost btn-icon" onclick="alignNodes('UD')" title="Aligner Verticalement"><i class="fas fa-arrows-alt-v"></i></button>
-            <button class="btn-ghost btn-icon" onclick="alignNodes('LR')" title="Aligner Horizontalement"><i class="fas fa-arrows-alt-h"></i></button>
-        </div>
-        <div class="tool-group">
-            <i class="fas fa-search" style="color: #64748b;"></i>
-            <input type="text" id="searchNode" placeholder="Rechercher..." style="width: 150px; margin:0; border:none; background:transparent;" oninput="searchNetwork()">
-        </div>
-    </div>
-
     <div id="sidebar">
+        <a href="/dashboard" class="btn-ghost" style="text-decoration:none; display:flex; align-items:center; gap:5px; margin-bottom: 10px; padding: 8px; justify-content: center;">
+            <i class="fas fa-arrow-left"></i> Retour Dashboard
+        </a>
+
         <h2><i class="fas fa-globe" style="color:var(--accent-green)"></i> NEXUS NET</h2>
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;"><%= plan.name %></div>
-        
-        <div class="section-header">Création</div>
-        
-        <label>Nom</label>
-        <input type="text" id="nodeLabel" placeholder="ex: Serveur Web">
-        <label>IP</label>
-        <input type="text" id="nodeIP" placeholder="10.0.0.1">
 
-        <div style="display:flex; gap:8px;">
-            <div style="flex:2">
-                <label>Type</label>
-                <select id="nodeType" onchange="toggleUpload()">
-                    <optgroup label="Infra">
-                        <option value="server">Serveur</option>
-                        <option value="router">Routeur</option>
-                        <option value="switch">Switch</option>
-                        <option value="firewall">Firewall</option>
-                        <option value="cloud">Internet</option>
-                        <option value="db">Database</option>
-                    </optgroup>
-                    <optgroup label="Utilisateurs">
-                        <option value="pc">PC</option>
-                        <option value="printer">Imprimante</option>
-                        <option value="wifi">Wifi</option>
-                    </optgroup>
-                    <optgroup label="Organisation">
-                        <option value="note">📝 Zone / Note</option>
-                    </optgroup>
-                    <optgroup label="Perso">
-                        <option value="custom">⭐ Image...</option>
-                    </optgroup>
-                </select>
-            </div>
-            <div style="flex:1">
-                <label>Couleur</label>
-                <input type="color" id="nodeColor" value="#38bdf8" style="height:40px; padding:2px; cursor:pointer;">
+        <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; display:flex; align-items:center; margin-bottom: 15px; border: 1px solid var(--border-color);">
+            <i class="fas fa-search" style="color: #64748b; margin-right: 8px;"></i>
+            <input type="text" id="searchNode" placeholder="Rechercher..." style="width: 100%; border:none; background:transparent; color:white; margin:0; padding:0;" oninput="searchNetwork()">
+        </div>
+        
+        <div class="category-header">Outils de Vue</div>
+        <div class="item-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 15px;">
+             <button class="item-btn" onclick="network.fit()" title="Recentrer"><i class="fas fa-compress-arrows-alt"></i><span>Centrer</span></button>
+             <button class="item-btn" onclick="toggleGrid()" title="Grille"><i class="fas fa-border-all"></i><span>Grille</span></button>
+             <button class="item-btn" onclick="toggleLinkMode()" id="btnLinkMode" title="Mode Liaison"><i class="fas fa-bezier-curve"></i><span>Lier</span></button>
+             <button class="item-btn" onclick="toggleMagnet()" id="btnMagnet" title="Aimant"><i class="fas fa-magnet"></i><span>Aimant</span></button>
+             <button class="item-btn" onclick="alignNodes('UD')" title="Aligner Verticalement"><i class="fas fa-arrows-alt-v"></i><span>Align V</span></button>
+             <button class="item-btn" onclick="alignNodes('LR')" title="Aligner Horizontalement"><i class="fas fa-arrows-alt-h"></i><span>Align H</span></button>
+        </div>
+        
+        <div class="section-header">Bibliothèque</div>
+        
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="nodeLabel" placeholder="Nom (optionnel)" style="margin-bottom:5px;">
+            <input type="text" id="nodeIP" placeholder="IP (optionnel)">
+            <div style="margin-top:5px;">
+                <label style="margin:0; font-size:10px; color:var(--text-secondary);">Couleur</label>
+                <div id="colorPalette" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:5px;"></div>
+                <input type="hidden" id="nodeColor" value="#38bdf8">
             </div>
         </div>
 
-        <div id="customUploadArea">
-            <input type="file" id="customImg" accept="image/*">
+        <div class="category-header">Infrastructure</div>
+        <div class="item-grid">
+            <div class="item-btn" onclick="addNode('server')"><i class="fas fa-server"></i><span>Serveur</span></div>
+            <div class="item-btn" onclick="addNode('router')"><i class="fas fa-network-wired"></i><span>Routeur</span></div>
+            <div class="item-btn" onclick="addNode('switch')"><i class="fas fa-microchip"></i><span>Switch</span></div>
+            <div class="item-btn" onclick="addNode('firewall')"><i class="fas fa-shield-halved"></i><span>Firewall</span></div>
+            <div class="item-btn" onclick="addNode('cloud')"><i class="fas fa-cloud"></i><span>Internet</span></div>
+            <div class="item-btn" onclick="addNode('db')"><i class="fas fa-database"></i><span>Data</span></div>
         </div>
 
-        <button class="btn-primary" onclick="addNode()">
-            <i class="fas fa-plus"></i> AJOUTER
-        </button>
+        <div class="category-header">Utilisateurs</div>
+        <div class="item-grid">
+            <div class="item-btn" onclick="addNode('pc')"><i class="fas fa-desktop"></i><span>PC</span></div>
+            <div class="item-btn" onclick="addNode('printer')"><i class="fas fa-print"></i><span>Print</span></div>
+            <div class="item-btn" onclick="addNode('wifi')"><i class="fas fa-wifi"></i><span>Wifi</span></div>
+        </div>
+
+        <div class="category-header">Outils</div>
+        <div class="item-grid">
+            <div class="item-btn" onclick="addNode('note')"><i class="fas fa-sticky-note"></i><span>Note</span></div>
+            <div class="item-btn" onclick="document.getElementById('customImg').click()"><i class="fas fa-image"></i><span>Image</span></div>
+        </div>
+        <input type="file" id="customImg" accept="image/*" style="display:none;">
 
         <div class="section-header">
             Connexion
@@ -210,7 +234,13 @@
         <input type="file" id="fileLoader" style="display:none;" onchange="loadJSONFromFile(this)">
     </div>
 
-    <div id="network-container" class="grid-bg"></div>
+    <div id="workspace-wrapper">
+        <div id="network-container" class="grid-bg"></div>
+        <div id="selectionBox" style="position:absolute; border:1px solid #38bdf8; background:rgba(56, 189, 248, 0.2); display:none; pointer-events:none; z-index:1000;"></div>
+        <div id="ruler-corner">px</div>
+        <canvas id="ruler-top"></canvas>
+        <canvas id="ruler-left"></canvas>
+    </div>
 
     <div id="inspector">
         <div id="insp-content-node" style="display:none;">
@@ -221,11 +251,12 @@
             <label>IP</label>
             <input type="text" id="edit-ip" oninput="updateNode()">
             <label>Couleur</label>
-            <input type="color" id="edit-color" style="height:35px; padding:0;" oninput="updateNode()">
+            <div id="editColorPalette" style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;"></div>
+            <input type="hidden" id="edit-color" oninput="updateNode()">
             <label>Opacité <span id="opacity-val" style="float:right">100%</span></label>
             <input type="range" id="edit-opacity" min="0" max="100" value="100" oninput="updateNode()">
-            <label>Taille</label>
-            <input type="range" id="edit-size" min="20" max="300" oninput="updateNode()">
+            <label>Taille (px)</label>
+            <input type="number" id="edit-size" min="20" max="300" oninput="updateNode()" style="width:100%; padding:5px; background:var(--bg-dark); border:1px solid var(--border-color); color:#fff; border-radius:4px;">
         </div>
 
         <div id="insp-content-edge" style="display:none;">
@@ -269,12 +300,33 @@
         let selectedEdgeId = null;
         let customImgBase64 = null;
         let magnetMode = false;
+        let linkMode = false;
+        const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#38bdf8', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#ffffff', '#94a3b8', '#475569', '#0f172a'];
         
         const planId = "<%= plan.id %>";
         // Use a safe way to inject JSON
         const rawPlanData = <%- plan.data ? JSON.stringify(plan.data) : 'null' %>;
 
         window.onload = function() {
+            // --- COLOR PALETTE ---
+            const palette = document.getElementById('colorPalette');
+            const nodeColorInput = document.getElementById('nodeColor');
+            
+            if(palette) {
+                colors.forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.cssText = `width:20px; height:20px; background:${c}; border-radius:3px; cursor:pointer; border:1px solid #334155;`;
+                    div.onclick = () => {
+                        nodeColorInput.value = c;
+                        Array.from(palette.children).forEach(ch => ch.style.borderColor = '#334155');
+                        div.style.borderColor = '#fff';
+                    };
+                    palette.appendChild(div);
+                });
+                // Select default (Sky Blue)
+                if(palette.children[6]) palette.children[6].click();
+            }
+
             // Load from DB
             if(rawPlanData) {
                 try {
@@ -296,7 +348,7 @@
                 nodes: {
                     shape: 'icon',
                     icon: { face: "'Font Awesome 6 Free'", weight: "900", size: 45, color: '#fff' },
-                    font: { face: 'Inter', color: '#fff', size: 14, strokeWidth: 4, strokeColor: '#0f172a', multi: 'html' },
+                    font: { face: 'Inter', color: '#fff', size: 14, strokeWidth: 4, strokeColor: '#0f172a', multi: 'html', vadjust: 4 },
                     shadow: { enabled: true, color: 'rgba(0,0,0,0.5)' }
                 },
                 edges: {
@@ -304,11 +356,404 @@
                     color: { color: '#64748b', highlight: '#38bdf8' },
                     smooth: { type: 'continuous', roundness: 0.2 }
                 },
-                physics: { stabilization: false, barnesHut: { gravitationalConstant: -2500 } },
-                interaction: { hover: true, multiselect: true, navigationButtons: false }
+                physics: { enabled: false },
+                interaction: { hover: true, multiselect: true, navigationButtons: false, dragView: false },
+                manipulation: {
+                    enabled: true,
+                    initiallyActive: false,
+                    addNode: false,
+                    addEdge: function(data, callback) {
+                        if (data.from !== data.to) {
+                            callback(data);
+                            savePlan(false);
+                        } else {
+                            callback(null);
+                        }
+                        // Re-enable mode if active
+                        if(linkMode) setTimeout(() => network.addEdgeMode(), 50);
+                    },
+                    editEdge: false,
+                    deleteNode: false,
+                    deleteEdge: false,
+                    controlNodeStyle: {
+                        shape: 'dot',
+                        size: 6,
+                        color: { background: '#38bdf8', border: '#0f172a' },
+                        borderWidth: 2
+                    }
+                }
             };
 
             network = new vis.Network(container, data, options);
+
+            // --- CUSTOM INTERACTION (Right Click Pan / Left Click Select / Resize) ---
+            const selectionBox = document.getElementById('selectionBox');
+            let isSelecting = false;
+            let isPanning = false;
+            let isResizing = false;
+            let resizeNodeId = null;
+            let resizeStartSize = 0;
+            let resizeStartPos = {x:0, y:0};
+            let startPos = {x:0, y:0};
+            let lastPos = {x:0, y:0};
+
+            function getCanvasPos(e) {
+                const canvas = container.querySelector('canvas');
+                if (canvas) {
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+                }
+                const rect = container.getBoundingClientRect();
+                return {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+            }
+
+            // Use capture to intercept events before Vis.js
+            container.addEventListener('mousedown', function(e) {
+                const containerRect = container.getBoundingClientRect();
+                const mouseX = e.clientX - containerRect.left;
+                const mouseY = e.clientY - containerRect.top;
+                
+                // 1. Check Resize Handles (Using DOM Coordinates for accuracy)
+                try {
+                    const selected = network.getSelectedNodes();
+                    
+                    for (const id of selected) {
+                        const handles = getNodeHandles(id); // Canvas Coords
+                        for (const h in handles) {
+                            const handleCanvasPos = handles[h];
+                            const handleDOMPos = network.canvasToDOM(handleCanvasPos); // DOM Coords
+                            
+                            // Calculate distance in screen pixels
+                            const dist = Math.sqrt((mouseX - handleDOMPos.x)**2 + (mouseY - handleDOMPos.y)**2);
+                            
+                            if (dist < 20) { // 20px screen hit radius
+                                 isResizing = true;
+                                 resizeNodeId = id;
+                                 resizeHandle = h;
+                                 const node = nodes.get(id);
+                                 
+                                 // Robust size retrieval
+                                 let currentSize = 45; 
+                                 if (node.shape === 'box' && node.font && node.font.size) currentSize = node.font.size;
+                                 else if (node.shape === 'image' && node.size) currentSize = node.size;
+                                 else if (node.icon && node.icon.size) currentSize = node.icon.size;
+                                 else if (node.size) currentSize = node.size;
+                                 
+                                 resizeStartSize = currentSize;
+                                 resizeStartPos = {x: e.clientX, y: e.clientY};
+                                 
+                                 e.stopPropagation(); 
+                                 e.preventDefault();
+                                 return; 
+                            }
+                        }
+                    }
+                } catch(err) { console.log("Resize check error", err); }
+
+                // 2. Check Node/Edge Hit
+                // We use DOMToCanvas for getNodeAt because it expects canvas coords? 
+                // No, getNodeAt expects DOM coordinates (pixel coordinates relative to canvas)
+                const pointer = {x: mouseX, y: mouseY}; 
+                const node = network.getNodeAt(pointer);
+                const edge = network.getEdgeAt(pointer);
+                
+                if (node !== undefined || edge !== undefined || linkMode) {
+                    return;
+                }
+
+                // 3. Selection Box or Pan
+                if (e.button === 0) { // Left Click -> Selection Box
+                    isSelecting = true;
+                    startPos = {x: mouseX, y: mouseY};
+                    
+                    selectionBox.style.left = startPos.x + 'px';
+                    selectionBox.style.top = startPos.y + 'px';
+                    selectionBox.style.width = '0px';
+                    selectionBox.style.height = '0px';
+                    selectionBox.style.display = 'block';
+                    e.stopPropagation();
+                    e.preventDefault();
+                } else if (e.button === 2) { // Right Click -> Pan
+                    isPanning = true;
+                    lastPos = {x: e.clientX, y: e.clientY};
+                    container.style.cursor = 'grabbing';
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
+            window.addEventListener('mousemove', function(e) {
+                if (isResizing) {
+                    const dx = e.clientX - resizeStartPos.x;
+                    const dy = e.clientY - resizeStartPos.y;
+                    
+                    let delta = 0;
+                    // Adjust sensitivity: 1 screen pixel = 0.5 size unit
+                    const sensitivity = 0.5;
+                    
+                    if (resizeHandle === 'br') delta = (dx + dy) / 2;
+                    else if (resizeHandle === 'tl') delta = -(dx + dy) / 2;
+                    else if (resizeHandle === 'tr') delta = (dx - dy) / 2;
+                    else if (resizeHandle === 'bl') delta = (-dx + dy) / 2;
+                    
+                    let newSize = resizeStartSize + (delta * sensitivity);
+                    if (newSize < 10) newSize = 10;
+                    if (newSize > 300) newSize = 300;
+
+                    const node = nodes.get(resizeNodeId);
+                    if(!node) return;
+
+                    const d = node._data || {};
+                    let updateObj = { id: resizeNodeId, _data: {...d, size: newSize} };
+                    
+                    if(node.shape === 'box') {
+                        updateObj.font = { ...(node.font || {}), size: newSize };
+                    } else {
+                        if(node.shape === 'image') updateObj.size = newSize;
+                        else updateObj.icon = { ...(node.icon || {}), size: newSize };
+                    }
+                    nodes.update(updateObj);
+                    
+                    // Update inspector if open
+                    if(selectedNodeId === resizeNodeId) {
+                        const input = document.getElementById('edit-size');
+                        if(input) input.value = Math.round(newSize);
+                    }
+                    e.preventDefault();
+
+                } else if (isSelecting) {
+                    const containerRect = container.getBoundingClientRect();
+                    const currentX = e.clientX - containerRect.left;
+                    const currentY = e.clientY - containerRect.top;
+                    
+                    const x = Math.min(startPos.x, currentX);
+                    const y = Math.min(startPos.y, currentY);
+                    const w = Math.abs(currentX - startPos.x);
+                    const h = Math.abs(currentY - startPos.y);
+                    
+                    selectionBox.style.left = x + 'px';
+                    selectionBox.style.top = y + 'px';
+                    selectionBox.style.width = w + 'px';
+                    selectionBox.style.height = h + 'px';
+                } else if (isPanning) {
+                    const dx = e.clientX - lastPos.x;
+                    const dy = e.clientY - lastPos.y;
+                    lastPos = {x: e.clientX, y: e.clientY};
+                    
+                    const translation = network.body.view.translation;
+                    network.body.view.translation = {
+                        x: translation.x + dx,
+                        y: translation.y + dy
+                    };
+                    network.redraw(); 
+                } else {
+                    // Cursor update for handles
+                    const containerRect = container.getBoundingClientRect();
+                    const mouseX = e.clientX - containerRect.left;
+                    const mouseY = e.clientY - containerRect.top;
+                    
+                    let overHandle = false;
+                    try {
+                        const selected = network.getSelectedNodes();
+                        for (const id of selected) {
+                            const handles = getNodeHandles(id);
+                            for (const h in handles) {
+                                const handleCanvasPos = handles[h];
+                                const handleDOMPos = network.canvasToDOM(handleCanvasPos);
+                                const dist = Math.sqrt((mouseX - handleDOMPos.x)**2 + (mouseY - handleDOMPos.y)**2);
+                                
+                                if (dist < 20) {
+                                    overHandle = true;
+                                    if (h === 'tl' || h === 'br') container.style.cursor = 'nwse-resize';
+                                    else container.style.cursor = 'nesw-resize';
+                                    break;
+                                }
+                            }
+                            if(overHandle) break;
+                        }
+                    } catch(e) {}
+                    
+                    if(!overHandle && !linkMode && !isPanning) container.style.cursor = 'default';
+                }
+            });
+
+            window.addEventListener('mouseup', function(e) {
+                if (isResizing) {
+                    isResizing = false;
+                    savePlan(false);
+                } else if (isSelecting) {
+                    isSelecting = false;
+                    
+                    // Calculate selected nodes BEFORE hiding box
+                    const rect = selectionBox.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    selectionBox.style.display = 'none';
+
+                    // Selection area relative to container (DOM coords)
+                    const selectRect = {
+                        left: rect.left - containerRect.left,
+                        top: rect.top - containerRect.top,
+                        right: rect.right - containerRect.left,
+                        bottom: rect.bottom - containerRect.top
+                    };
+                    
+                    // Select nodes inside
+                    const allNodes = nodes.get();
+                    const selectedIds = [];
+                    allNodes.forEach(n => {
+                        const pos = network.getPositions([n.id])[n.id]; // Canvas coords
+                        if (!pos) return;
+                        const domPos = network.canvasToDOM(pos); // DOM coords
+                        
+                        if (domPos.x >= selectRect.left && domPos.x <= selectRect.right &&
+                            domPos.y >= selectRect.top && domPos.y <= selectRect.bottom) {
+                            selectedIds.push(n.id);
+                        }
+                    });
+                    
+                    if (e.ctrlKey) {
+                        const current = network.getSelectedNodes();
+                        network.selectNodes([...new Set([...current, ...selectedIds])]);
+                    } else {
+                        network.selectNodes(selectedIds);
+                    }
+                    
+                } else if (isPanning) {
+                    isPanning = false;
+                    container.style.cursor = 'default';
+                }
+            });
+
+            container.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Limit Zoom
+            network.on("zoom", function (params) {
+                if (params.scale < 0.2) {
+                    network.moveTo({ scale: 0.2, animation: false });
+                }
+                if (params.scale > 4.0) {
+                    network.moveTo({ scale: 4.0, animation: false });
+                }
+            });
+
+            // Initial draw
+            network.once("afterDrawing", function() {
+                const scale = network.getScale();
+                const translation = network.body.view.translation;
+                drawRulers(scale, translation);
+            });
+
+            // Sync grid with network movement
+            network.on("afterDrawing", function (ctx) {
+                const container = document.getElementById('network-container');
+                const scale = network.getScale();
+                const translation = network.body.view.translation;
+
+                if (container.classList.contains('grid-bg')) {
+                    if (scale < 0.2) {
+                        container.style.backgroundImage = 'none';
+                    } else {
+                        container.style.backgroundImage = ''; // Restore CSS default
+                        const gridSize = 40 * scale;
+                        container.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+                        container.style.backgroundPosition = `${translation.x}px ${translation.y}px`;
+                    }
+                } else {
+                    container.style.backgroundPosition = '';
+                    container.style.backgroundSize = '';
+                    container.style.backgroundImage = '';
+                }
+                
+                drawRulers(scale, translation);
+                drawSelectionHandles(ctx);
+            });
+
+            function drawSelectionHandles(ctx) {
+                const selected = network.getSelectedNodes();
+                if (selected.length === 0) return;
+
+                selected.forEach(id => {
+                    const bb = network.getBoundingBox(id);
+                    // Add padding
+                    const p = 5;
+                    const left = bb.left - p;
+                    const top = bb.top - p;
+                    const width = (bb.right - bb.left) + 2*p;
+                    const height = (bb.bottom - bb.top) + 2*p;
+
+                    // Draw box
+                    ctx.beginPath();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.setLineDash([5, 5]);
+                    ctx.rect(left, top, width, height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Draw handles
+                    ctx.fillStyle = '#38bdf8';
+                    const handles = getNodeHandles(id);
+                    for (const h in handles) {
+                        const pt = handles[h];
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, 4, 0, 2*Math.PI);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            function getNodeHandles(nodeId) {
+                const bb = network.getBoundingBox(nodeId);
+                const p = 5;
+                return {
+                    tl: {x: bb.left - p, y: bb.top - p},
+                    tr: {x: bb.right + p, y: bb.top - p},
+                    bl: {x: bb.left - p, y: bb.bottom + p},
+                    br: {x: bb.right + p, y: bb.bottom + p}
+                };
+            }
+
+            /*
+            // Custom Drawing for Anchor Points
+            network.on("afterDrawing", function (ctx) {
+                const selected = network.getSelectedNodes();
+                if(selected.length === 0) return;
+
+                const positions = network.getPositions(selected);
+                
+                selected.forEach(id => {
+                    const pos = positions[id];
+                    if(!pos) return;
+                    
+                    // Draw 4 anchor points
+                    const r = 35; // Distance from center
+                    const anchors = [
+                        {x: pos.x, y: pos.y - r}, // Top
+                        {x: pos.x, y: pos.y + r}, // Bottom
+                        {x: pos.x - r, y: pos.y}, // Left
+                        {x: pos.x + r, y: pos.y}  // Right
+                    ];
+
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.lineWidth = 1;
+
+                    anchors.forEach(p => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 3, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
+                });
+            });
+            */
 
             // Events
             network.on("click", function (params) {
@@ -329,7 +774,25 @@
 
             document.getElementById('customImg').addEventListener('change', e => {
                 const f = e.target.files[0];
-                if(f) { const r = new FileReader(); r.onload=ev=>customImgBase64=ev.target.result; r.readAsDataURL(f); }
+                if(f) { 
+                    const r = new FileReader(); 
+                    r.onload = ev => {
+                        const imgBase64 = ev.target.result;
+                        const label = document.getElementById('nodeLabel').value || "Image";
+                        const node = {
+                            id: Date.now(),
+                            label: `<b>${label}</b>`,
+                            shape: 'image',
+                            image: imgBase64,
+                            size: 50,
+                            _data: { name: label, ip: "", type: 'custom', color: '#ffffff', size: 50, opacity: 100, isCustom: true, img: imgBase64 }
+                        };
+                        nodes.add(node);
+                        updateSelects(); savePlan(false);
+                        document.getElementById('nodeLabel').value="";
+                    }; 
+                    r.readAsDataURL(f); 
+                }
             });
 
             document.addEventListener('keydown', e => { if(e.key==="Delete") deleteSelected(); });
@@ -351,6 +814,22 @@
             const btn = document.getElementById('btnMagnet');
             if(magnetMode) btn.classList.add('active');
             else btn.classList.remove('active');
+        }
+
+        function toggleLinkMode() {
+            linkMode = !linkMode;
+            const btn = document.getElementById('btnLinkMode');
+            const container = document.getElementById('network-container');
+            
+            if(linkMode) {
+                btn.classList.add('active');
+                container.style.cursor = 'crosshair';
+                network.addEdgeMode();
+            } else {
+                btn.classList.remove('active');
+                container.style.cursor = 'default';
+                network.disableEditMode();
+            }
         }
 
         function snapToGrid(nodeIds) {
@@ -436,15 +915,15 @@
         }
 
         // --- STANDARD FUNCTIONS ---
-        function addNode() {
-            const label = document.getElementById('nodeLabel').value || "Node";
+        function addNode(type) {
+            const labelInput = document.getElementById('nodeLabel').value;
+            const label = labelInput || (type === 'note' ? "Note" : type.charAt(0).toUpperCase() + type.slice(1));
             const ip = document.getElementById('nodeIP').value;
-            const type = document.getElementById('nodeType').value;
             const color = document.getElementById('nodeColor').value;
 
             let node = {
                 id: Date.now(),
-                label: `<b>${label}</b>` + (ip ? `\n${ip}` : ""),
+                label: `\n<b>${label}</b>` + (ip ? `\n${ip}` : ""),
                 _data: { name: label, ip: ip, type: type, color: color, size: 45, opacity: 100 }
             };
 
@@ -454,10 +933,6 @@
                 node.font = { color: '#000', size: 16, strokeWidth: 0, multi:false };
                 node.label = label;
                 node.shapeProperties = { borderDashes: false };
-            } else if(type === 'custom') {
-                if(!customImgBase64) return alert("Image !");
-                node.shape = 'image'; node.image = customImgBase64; node.size = 50;
-                node._data.isCustom = true; node._data.img = customImgBase64;
             } else {
                 const def = icons[type] || icons.server;
                 node.icon = { code: def.code, color: color, face: "'Font Awesome 6 Free'" };
@@ -493,6 +968,25 @@
             document.getElementById('edit-name').value = d.name || "";
             document.getElementById('edit-ip').value = d.ip || "";
             document.getElementById('edit-color').value = d.color || "#ffffff";
+
+            // Palette Inspector
+            const palette = document.getElementById('editColorPalette');
+            if(palette) {
+                palette.innerHTML = '';
+                colors.forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.cssText = `width:20px; height:20px; background:${c}; border-radius:3px; cursor:pointer; border:1px solid #334155;`;
+                    if(c === (d.color || "#ffffff")) div.style.borderColor = '#fff';
+                    div.onclick = () => {
+                        document.getElementById('edit-color').value = c;
+                        updateNode();
+                        Array.from(palette.children).forEach(ch => ch.style.borderColor = '#334155');
+                        div.style.borderColor = '#fff';
+                    };
+                    palette.appendChild(div);
+                });
+            }
+
             let op = d.opacity !== undefined ? d.opacity : 100;
             document.getElementById('edit-opacity').value = op;
             document.getElementById('opacity-val').innerText = op + "%";
@@ -525,7 +1019,7 @@
                 updateObj.color = { background: hexToRgba(color, alpha), border: color };
                 updateObj.font = { ...node.font, size: size };
             } else {
-                updateObj.label = `<b>${name}</b>` + (ip ? `\n${ip}` : "");
+                updateObj.label = `\n<b>${name}</b>` + (ip ? `\n${ip}` : "");
                 if(node.shape === 'image') updateObj.size = size;
                 else updateObj.icon = { ...node.icon, color: hexToRgba(color, alpha), size: size };
             }
@@ -586,8 +1080,10 @@
             r.readAsText(file);
         }
         function toggleFullscreen() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
-        function toggleGrid() { document.getElementById('network-container').classList.toggle('grid-bg'); }
-        function toggleUpload() { const val = document.getElementById('nodeType').value; document.getElementById('customUploadArea').style.display = (val==='custom')?'block':'none'; }
+        function toggleGrid() { 
+            document.getElementById('network-container').classList.toggle('grid-bg'); 
+            network.redraw();
+        }
         function updateSelects() {
             const s1=document.getElementById('fromNode'), s2=document.getElementById('toNode');
             s1.innerHTML='<option>De...</option>'; s2.innerHTML='<option>Vers...</option>';
@@ -603,6 +1099,78 @@
         function exportJSON() { const d = {nodes:nodes.get(), edges:edges.get()}; const b = new Blob([JSON.stringify(d)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='nexus.json'; a.click(); }
         function exportPDF() { network.fit({animation:false}); setTimeout(()=>{ const cvs = document.querySelector('canvas'); const pdf = new window.jspdf.jsPDF('l','mm','a4'); pdf.addImage(cvs.toDataURL("image/jpeg",1.0),'JPEG',10,10,280,150); pdf.save("schema.pdf"); },500); }
         function downloadFile(content, name, type) { const blob = new Blob([content], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+
+        function drawRulers(scale, translation) {
+            const topCanvas = document.getElementById('ruler-top');
+            const leftCanvas = document.getElementById('ruler-left');
+            const container = document.getElementById('network-container');
+            
+            if(!topCanvas || !leftCanvas) return;
+
+            if(topCanvas.width !== container.offsetWidth) topCanvas.width = container.offsetWidth;
+            if(topCanvas.height !== 20) topCanvas.height = 20;
+            if(leftCanvas.width !== 20) leftCanvas.width = 20;
+            if(leftCanvas.height !== container.offsetHeight) leftCanvas.height = container.offsetHeight;
+
+            const ctxT = topCanvas.getContext('2d');
+            const ctxL = leftCanvas.getContext('2d');
+
+            ctxT.clearRect(0, 0, topCanvas.width, topCanvas.height);
+            ctxL.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+
+            ctxT.fillStyle = '#94a3b8';
+            ctxL.fillStyle = '#94a3b8';
+            ctxT.font = '10px Inter';
+            ctxL.font = '10px Inter';
+            
+            let step = 100;
+            if (scale > 2) step = 20;
+            else if (scale > 0.8) step = 50;
+            else if (scale > 0.4) step = 100;
+            else step = 200;
+
+            const startX = -translation.x / scale;
+            const startY = -translation.y / scale;
+            
+            const firstX = Math.floor(startX / step) * step;
+            const firstY = Math.floor(startY / step) * step;
+
+            for (let x = firstX; ; x += step) {
+                const screenX = x * scale + translation.x;
+                if (screenX > topCanvas.width) break;
+                if (screenX < 20) continue; 
+
+                ctxT.beginPath();
+                ctxT.moveTo(screenX, 15);
+                ctxT.lineTo(screenX, 20);
+                ctxT.strokeStyle = '#64748b';
+                ctxT.stroke();
+                ctxT.fillText(x, screenX + 2, 12);
+            }
+
+            for (let y = firstY; ; y += step) {
+                const screenY = y * scale + translation.y;
+                if (screenY > leftCanvas.height) break;
+                if (screenY < 20) continue;
+
+                ctxL.beginPath();
+                ctxL.moveTo(15, screenY);
+                ctxL.lineTo(20, screenY);
+                ctxL.strokeStyle = '#64748b';
+                ctxL.stroke();
+
+                ctxL.save();
+                ctxL.translate(12, screenY + 2);
+                ctxL.rotate(-Math.PI / 2);
+                ctxL.fillText(y, 0, 0);
+                ctxL.restore();
+            }
+            
+            ctxT.fillStyle = '#1e293b';
+            ctxT.fillRect(0,0,20,20);
+            ctxL.fillStyle = '#1e293b';
+            ctxL.fillRect(0,0,20,20);
+        }
     </script>
 </body>
 </html>

@@ -26,4 +26,4 @@ Ensuite, ouvrez votre navigateur sur : [http://localhost:3000](http://localhost:
 *   **Système de compte** : Inscription et Connexion sécurisée.
 *   **Dashboard** : Gestion de vos plans réseaux.
 *   **Éditeur** : L'outil Nexus Net complet avec sauvegarde automatique sur le serveur.
-*   **Base de données** : SQLite (fichier `nexus-net.db` créé automatiquement).
+*   **Base de données** : SQLite (fichier `nexus.db` créé automatiquement).

@@ -3,6 +3,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
+require('dotenv').config();
 const db = require('./database');
 
 const app = express();
@@ -16,7 +17,7 @@ app.set('view engine', 'ejs');
 
 // Session setup
 app.use(session({
-    secret: 'nexus-secret-key-change-this',
+    secret: process.env.SESSION_SECRET || 'nexus-secret-key-change-this',
     resave: false,
     saveUninitialized: false
 }));
@@ -66,11 +67,16 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    const { username, password } = req.body;
+    const { username, email, password, confirmPassword } = req.body;
+    
+    if (password !== confirmPassword) {
+        return res.render('register', { error: 'Les mots de passe ne correspondent pas' });
+    }
+
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.render('register', { error: 'Error hashing password' });
         
-        db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], function(err) {
+        db.run('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hash], function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
                     return res.render('register', { error: 'Username already exists' });
