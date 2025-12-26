@@ -84,6 +84,17 @@
             border-left: 4px solid var(--accent-purple);
         }
         
+        #ruler-top {
+            position: absolute; top: 0; left: 0; width: 100%; height: 20px;
+            background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-color);
+            z-index: 10; pointer-events: none;
+        }
+        #ruler-left {
+            position: absolute; top: 0; left: 0; width: 20px; height: 100%;
+            background: rgba(15, 23, 42, 0.8); border-right: 1px solid var(--border-color);
+            z-index: 10; pointer-events: none;
+        }
+
         #network-container { flex-grow: 1; position: relative; }
         #customUploadArea { display: none; padding: 10px; border: 1px dashed var(--accent-blue); background: rgba(56, 189, 248, 0.1); border-radius: 4px; margin-bottom: 10px;}
         
@@ -213,7 +224,10 @@
         <input type="file" id="fileLoader" style="display:none;" onchange="loadJSONFromFile(this)">
     </div>
 
-    <div id="network-container" class="grid-bg"></div>
+    <div id="network-container" class="grid-bg">
+        <canvas id="ruler-top"></canvas>
+        <canvas id="ruler-left"></canvas>
+    </div>
 
     <div id="inspector">
         <div id="insp-content-node" style="display:none;">
@@ -362,9 +376,10 @@
             // Sync grid with network movement
             network.on("afterDrawing", function (ctx) {
                 const container = document.getElementById('network-container');
+                const scale = network.getScale();
+                const translation = network.body.view.translation;
+
                 if (container.classList.contains('grid-bg')) {
-                    const scale = network.getScale();
-                    const translation = network.body.view.translation;
                     const gridSize = 40 * scale;
                     container.style.backgroundSize = `${gridSize}px ${gridSize}px`;
                     container.style.backgroundPosition = `${translation.x}px ${translation.y}px`;
@@ -372,6 +387,8 @@
                     container.style.backgroundPosition = '';
                     container.style.backgroundSize = '';
                 }
+                
+                drawRulers(scale, translation);
             });
 
             /*
@@ -753,6 +770,78 @@
         function exportJSON() { const d = {nodes:nodes.get(), edges:edges.get()}; const b = new Blob([JSON.stringify(d)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='nexus.json'; a.click(); }
         function exportPDF() { network.fit({animation:false}); setTimeout(()=>{ const cvs = document.querySelector('canvas'); const pdf = new window.jspdf.jsPDF('l','mm','a4'); pdf.addImage(cvs.toDataURL("image/jpeg",1.0),'JPEG',10,10,280,150); pdf.save("schema.pdf"); },500); }
         function downloadFile(content, name, type) { const blob = new Blob([content], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); }
+
+        function drawRulers(scale, translation) {
+            const topCanvas = document.getElementById('ruler-top');
+            const leftCanvas = document.getElementById('ruler-left');
+            const container = document.getElementById('network-container');
+            
+            if(!topCanvas || !leftCanvas) return;
+
+            if(topCanvas.width !== container.offsetWidth) topCanvas.width = container.offsetWidth;
+            if(topCanvas.height !== 20) topCanvas.height = 20;
+            if(leftCanvas.width !== 20) leftCanvas.width = 20;
+            if(leftCanvas.height !== container.offsetHeight) leftCanvas.height = container.offsetHeight;
+
+            const ctxT = topCanvas.getContext('2d');
+            const ctxL = leftCanvas.getContext('2d');
+
+            ctxT.clearRect(0, 0, topCanvas.width, topCanvas.height);
+            ctxL.clearRect(0, 0, leftCanvas.width, leftCanvas.height);
+
+            ctxT.fillStyle = '#94a3b8';
+            ctxL.fillStyle = '#94a3b8';
+            ctxT.font = '10px Inter';
+            ctxL.font = '10px Inter';
+            
+            let step = 100;
+            if (scale > 2) step = 20;
+            else if (scale > 0.8) step = 50;
+            else if (scale > 0.4) step = 100;
+            else step = 200;
+
+            const startX = -translation.x / scale;
+            const startY = -translation.y / scale;
+            
+            const firstX = Math.floor(startX / step) * step;
+            const firstY = Math.floor(startY / step) * step;
+
+            for (let x = firstX; ; x += step) {
+                const screenX = x * scale + translation.x;
+                if (screenX > topCanvas.width) break;
+                if (screenX < 20) continue; 
+
+                ctxT.beginPath();
+                ctxT.moveTo(screenX, 15);
+                ctxT.lineTo(screenX, 20);
+                ctxT.strokeStyle = '#64748b';
+                ctxT.stroke();
+                ctxT.fillText(x, screenX + 2, 12);
+            }
+
+            for (let y = firstY; ; y += step) {
+                const screenY = y * scale + translation.y;
+                if (screenY > leftCanvas.height) break;
+                if (screenY < 20) continue;
+
+                ctxL.beginPath();
+                ctxL.moveTo(15, screenY);
+                ctxL.lineTo(20, screenY);
+                ctxL.strokeStyle = '#64748b';
+                ctxL.stroke();
+
+                ctxL.save();
+                ctxL.translate(12, screenY + 2);
+                ctxL.rotate(-Math.PI / 2);
+                ctxL.fillText(y, 0, 0);
+                ctxL.restore();
+            }
+            
+            ctxT.fillStyle = '#1e293b';
+            ctxT.fillRect(0,0,20,20);
+            ctxL.fillStyle = '#1e293b';
+            ctxL.fillRect(0,0,20,20);
+        }
     </script>
 </body>
 </html>
