@@ -236,6 +236,7 @@
 
     <div id="workspace-wrapper">
         <div id="network-container" class="grid-bg"></div>
+        <div id="selectionBox" style="position:absolute; border:1px solid #38bdf8; background:rgba(56, 189, 248, 0.2); display:none; pointer-events:none; z-index:1000;"></div>
         <div id="ruler-corner">px</div>
         <canvas id="ruler-top"></canvas>
         <canvas id="ruler-left"></canvas>
@@ -356,7 +357,7 @@
                     smooth: { type: 'continuous', roundness: 0.2 }
                 },
                 physics: { enabled: false },
-                interaction: { hover: true, multiselect: true, navigationButtons: false },
+                interaction: { hover: true, multiselect: true, navigationButtons: false, dragView: false },
                 manipulation: {
                     enabled: true,
                     initiallyActive: false,
@@ -384,6 +385,120 @@
             };
 
             network = new vis.Network(container, data, options);
+
+            // --- CUSTOM INTERACTION (Right Click Pan / Left Click Select) ---
+            const selectionBox = document.getElementById('selectionBox');
+            let isSelecting = false;
+            let isPanning = false;
+            let startPos = {x:0, y:0};
+            let lastPos = {x:0, y:0};
+
+            container.addEventListener('mousedown', function(e) {
+                // Ignore if clicking on a node/edge (let vis handle it)
+                const pointer = {x: e.offsetX, y: e.offsetY}; // DOM coords relative to container
+                // Check if we hit a node or edge
+                // Note: getNodeAt expects DOM coordinates
+                const node = network.getNodeAt(pointer);
+                const edge = network.getEdgeAt(pointer);
+                
+                // If we clicked a node/edge, or if we are in link mode, let default behavior happen
+                if (node !== undefined || edge !== undefined || linkMode) {
+                    return;
+                }
+
+                if (e.button === 0) { // Left Click -> Selection Box
+                    isSelecting = true;
+                    // Get coordinates relative to workspace-wrapper (parent of selectionBox)
+                    const wrapper = document.getElementById('workspace-wrapper');
+                    const rect = wrapper.getBoundingClientRect();
+                    startPos = {x: e.clientX - rect.left, y: e.clientY - rect.top};
+                    
+                    selectionBox.style.left = startPos.x + 'px';
+                    selectionBox.style.top = startPos.y + 'px';
+                    selectionBox.style.width = '0px';
+                    selectionBox.style.height = '0px';
+                    selectionBox.style.display = 'block';
+                } else if (e.button === 2) { // Right Click -> Pan
+                    isPanning = true;
+                    lastPos = {x: e.clientX, y: e.clientY};
+                    container.style.cursor = 'grabbing';
+                }
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (isSelecting) {
+                    const wrapper = document.getElementById('workspace-wrapper');
+                    const rect = wrapper.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    const currentY = e.clientY - rect.top;
+                    
+                    const x = Math.min(startPos.x, currentX);
+                    const y = Math.min(startPos.y, currentY);
+                    const w = Math.abs(currentX - startPos.x);
+                    const h = Math.abs(currentY - startPos.y);
+                    
+                    selectionBox.style.left = x + 'px';
+                    selectionBox.style.top = y + 'px';
+                    selectionBox.style.width = w + 'px';
+                    selectionBox.style.height = h + 'px';
+                } else if (isPanning) {
+                    const dx = e.clientX - lastPos.x;
+                    const dy = e.clientY - lastPos.y;
+                    lastPos = {x: e.clientX, y: e.clientY};
+                    
+                    const translation = network.body.view.translation;
+                    network.body.view.translation = {
+                        x: translation.x + dx,
+                        y: translation.y + dy
+                    };
+                    network.redraw(); // Will trigger afterDrawing for grid
+                }
+            });
+
+            window.addEventListener('mouseup', function(e) {
+                if (isSelecting) {
+                    isSelecting = false;
+                    selectionBox.style.display = 'none';
+                    
+                    // Calculate selected nodes
+                    const rect = selectionBox.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    // Selection area relative to container (DOM coords)
+                    const selectRect = {
+                        left: rect.left - containerRect.left,
+                        top: rect.top - containerRect.top,
+                        right: rect.right - containerRect.left,
+                        bottom: rect.bottom - containerRect.top
+                    };
+                    
+                    // Select nodes inside
+                    const allNodes = nodes.get();
+                    const selectedIds = [];
+                    allNodes.forEach(n => {
+                        const pos = network.getPositions([n.id])[n.id]; // Canvas coords
+                        const domPos = network.canvasToDOM(pos); // DOM coords
+                        
+                        if (domPos.x >= selectRect.left && domPos.x <= selectRect.right &&
+                            domPos.y >= selectRect.top && domPos.y <= selectRect.bottom) {
+                            selectedIds.push(n.id);
+                        }
+                    });
+                    
+                    if (e.ctrlKey) {
+                        const current = network.getSelectedNodes();
+                        network.selectNodes([...new Set([...current, ...selectedIds])]);
+                    } else {
+                        network.selectNodes(selectedIds);
+                    }
+                    
+                } else if (isPanning) {
+                    isPanning = false;
+                    container.style.cursor = 'default';
+                }
+            });
+
+            container.addEventListener('contextmenu', e => e.preventDefault());
 
             // Limit Zoom
             network.on("zoom", function (params) {
