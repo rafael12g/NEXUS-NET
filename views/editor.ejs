@@ -348,7 +348,7 @@
                 nodes: {
                     shape: 'icon',
                     icon: { face: "'Font Awesome 6 Free'", weight: "900", size: 45, color: '#fff' },
-                    font: { face: 'Inter', color: '#fff', size: 14, strokeWidth: 4, strokeColor: '#0f172a', multi: 'html' },
+                    font: { face: 'Inter', color: '#fff', size: 14, strokeWidth: 4, strokeColor: '#0f172a', multi: 'html', vadjust: 4 },
                     shadow: { enabled: true, color: 'rgba(0,0,0,0.5)' }
                 },
                 edges: {
@@ -432,7 +432,7 @@
                             // Calculate distance in screen pixels
                             const dist = Math.sqrt((mouseX - handleDOMPos.x)**2 + (mouseY - handleDOMPos.y)**2);
                             
-                            if (dist < 15) { // 15px screen hit radius
+                            if (dist < 20) { // 20px screen hit radius
                                  isResizing = true;
                                  resizeNodeId = id;
                                  resizeHandle = h;
@@ -568,7 +568,7 @@
                                 const handleDOMPos = network.canvasToDOM(handleCanvasPos);
                                 const dist = Math.sqrt((mouseX - handleDOMPos.x)**2 + (mouseY - handleDOMPos.y)**2);
                                 
-                                if (dist < 15) {
+                                if (dist < 20) {
                                     overHandle = true;
                                     if (h === 'tl' || h === 'br') container.style.cursor = 'nwse-resize';
                                     else container.style.cursor = 'nesw-resize';
@@ -923,7 +923,7 @@
 
             let node = {
                 id: Date.now(),
-                label: `<b>${label}</b>` + (ip ? `\n\n${ip}` : ""),
+                label: `\n<b>${label}</b>` + (ip ? `\n${ip}` : ""),
                 _data: { name: label, ip: ip, type: type, color: color, size: 45, opacity: 100 }
             };
 
@@ -1019,7 +1019,7 @@
                 updateObj.color = { background: hexToRgba(color, alpha), border: color };
                 updateObj.font = { ...node.font, size: size };
             } else {
-                updateObj.label = `<b>${name}</b>` + (ip ? `\n\n${ip}` : "");
+                updateObj.label = `\n<b>${name}</b>` + (ip ? `\n${ip}` : "");
                 if(node.shape === 'image') updateObj.size = size;
                 else updateObj.icon = { ...node.icon, color: hexToRgba(color, alpha), size: size };
             }
