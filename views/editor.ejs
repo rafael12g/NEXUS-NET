@@ -359,6 +359,21 @@
 
             network = new vis.Network(container, data, options);
 
+            // Sync grid with network movement
+            network.on("afterDrawing", function (ctx) {
+                const container = document.getElementById('network-container');
+                if (container.classList.contains('grid-bg')) {
+                    const scale = network.getScale();
+                    const translation = network.body.view.translation;
+                    const gridSize = 40 * scale;
+                    container.style.backgroundSize = `${gridSize}px ${gridSize}px`;
+                    container.style.backgroundPosition = `${translation.x}px ${translation.y}px`;
+                } else {
+                    container.style.backgroundPosition = '';
+                    container.style.backgroundSize = '';
+                }
+            });
+
             /*
             // Custom Drawing for Anchor Points
             network.on("afterDrawing", function (ctx) {
@@ -719,7 +734,10 @@
             r.readAsText(file);
         }
         function toggleFullscreen() { if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
-        function toggleGrid() { document.getElementById('network-container').classList.toggle('grid-bg'); }
+        function toggleGrid() { 
+            document.getElementById('network-container').classList.toggle('grid-bg'); 
+            network.redraw();
+        }
         function updateSelects() {
             const s1=document.getElementById('fromNode'), s2=document.getElementById('toNode');
             s1.innerHTML='<option>De...</option>'; s2.innerHTML='<option>Vers...</option>';
