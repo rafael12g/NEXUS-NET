@@ -24,6 +24,10 @@ function initDb() {
                 console.error('Error initializing database schema:', err);
             } else {
                 console.log('Database schema initialized from schema.sql.');
+                // Migration: Add email column if not exists
+                db.run("ALTER TABLE users ADD COLUMN email TEXT", (err) => {
+                    // Ignore error if column already exists
+                });
             }
         });
     } catch (err) {

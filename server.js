@@ -67,11 +67,16 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    const { username, password } = req.body;
+    const { username, email, password, confirmPassword } = req.body;
+    
+    if (password !== confirmPassword) {
+        return res.render('register', { error: 'Les mots de passe ne correspondent pas' });
+    }
+
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.render('register', { error: 'Error hashing password' });
         
-        db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], function(err) {
+        db.run('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hash], function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
                     return res.render('register', { error: 'Username already exists' });
