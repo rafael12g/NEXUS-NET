@@ -1,33 +1,39 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const mysql = require('mysql2');
 const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
-const dbFile = process.env.DB_FILE || 'nexus.db';
-const dbPath = path.resolve(__dirname, dbFile);
-const schemaPath = path.resolve(__dirname, 'schema.sql');
+const pool = mysql.createPool({
+    host: process.env.DB_HOST || 'db',
+    user: process.env.DB_USER || 'nexus',
+    password: process.env.DB_PASS || 'nexus_password',
+    database: process.env.DB_NAME || 'nexus_net',
+    multipleStatements: true,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
 
-const db = new sqlite3.Database(dbPath, (err) => {
+// Test connection and init DB
+pool.getConnection((err, connection) => {
     if (err) {
-        console.error('Error opening database ' + dbPath + ': ' + err.message);
+        console.error('Error connecting to MySQL database:', err);
     } else {
-        console.log('Connected to the SQLite database.');
-        initDb();
+        console.log('Connected to the MySQL database.');
+        initDb(connection);
+        connection.release();
     }
 });
 
-function initDb() {
+function initDb(connection) {
+    const schemaPath = path.resolve(__dirname, 'schema.sql');
     try {
         const schema = fs.readFileSync(schemaPath, 'utf8');
-        db.exec(schema, (err) => {
+        connection.query(schema, (err) => {
             if (err) {
                 console.error('Error initializing database schema:', err);
             } else {
                 console.log('Database schema initialized from schema.sql.');
-                // Migration: Add email column if not exists
-                db.run("ALTER TABLE users ADD COLUMN email TEXT", (err) => {
-                    // Ignore error if column already exists
-                });
             }
         });
     } catch (err) {
@@ -35,4 +41,4 @@ function initDb() {
     }
 }
 
-module.exports = db;
+module.exports = pool;

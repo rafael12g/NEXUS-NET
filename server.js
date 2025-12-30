@@ -45,8 +45,9 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
+    db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) return res.render('login', { error: 'Database error' });
+        const user = results[0];
         if (!user) return res.render('login', { error: 'User not found' });
 
         bcrypt.compare(password, user.password, (err, result) => {
@@ -76,9 +77,9 @@ app.post('/register', (req, res) => {
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.render('register', { error: 'Error hashing password' });
         
-        db.run('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hash], function(err) {
+        db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hash], (err, result) => {
             if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
+                if (err.code === 'ER_DUP_ENTRY') {
                     return res.render('register', { error: 'Username already exists' });
                 }
                 return res.render('register', { error: 'Database error' });
@@ -96,7 +97,7 @@ app.get('/logout', (req, res) => {
 
 // Dashboard
 app.get('/dashboard', requireLogin, (req, res) => {
-    db.all('SELECT * FROM plans WHERE user_id = ? ORDER BY created_at DESC', [req.session.userId], (err, plans) => {
+    db.query('SELECT * FROM plans WHERE user_id = ? ORDER BY created_at DESC', [req.session.userId], (err, plans) => {
         if (err) return res.status(500).send('Database error');
         res.render('dashboard', { user: req.session.user, plans: plans });
     });
@@ -107,17 +108,18 @@ app.post('/plans/create', requireLogin, (req, res) => {
     const { name } = req.body;
     const defaultData = JSON.stringify({ nodes: [], edges: [] }); // Empty graph
     
-    db.run('INSERT INTO plans (user_id, name, data) VALUES (?, ?, ?)', [req.session.userId, name, defaultData], function(err) {
+    db.query('INSERT INTO plans (user_id, name, data) VALUES (?, ?, ?)', [req.session.userId, name, defaultData], (err, result) => {
         if (err) return res.status(500).send('Database error');
-        res.redirect('/editor/' + this.lastID);
+        res.redirect('/editor/' + result.insertId);
     });
 });
 
 // Editor
 app.get('/editor/:id', requireLogin, (req, res) => {
     const planId = req.params.id;
-    db.get('SELECT * FROM plans WHERE id = ? AND user_id = ?', [planId, req.session.userId], (err, plan) => {
+    db.query('SELECT * FROM plans WHERE id = ? AND user_id = ?', [planId, req.session.userId], (err, results) => {
         if (err) return res.status(500).send('Database error');
+        const plan = results[0];
         if (!plan) return res.status(404).send('Plan not found');
         
         res.render('editor', { plan: plan });
@@ -132,7 +134,7 @@ app.post('/api/save/:id', requireLogin, (req, res) => {
     // Ensure data is a string
     const dataString = typeof data === 'string' ? data : JSON.stringify(data);
 
-    db.run('UPDATE plans SET data = ? WHERE id = ? AND user_id = ?', [dataString, planId, req.session.userId], function(err) {
+    db.query('UPDATE plans SET data = ? WHERE id = ? AND user_id = ?', [dataString, planId, req.session.userId], (err, result) => {
         if (err) return res.status(500).json({ success: false, error: err.message });
         res.json({ success: true });
     });
