@@ -1,5 +1,7 @@
 # 🌐 Nexus NET - Universal Network Architect
 
+**In development**
+
 **Nexus NET** est un outil de cartographie réseau "Single-File" (fichier unique) conçu pour les administrateurs systèmes, les architectes réseaux et les étudiants. Il offre une interface moderne, sombre ("Cyberpunk/Dark Mode") et fluide pour concevoir des topologies complexes directement dans le navigateur.
 
 > **Aucune installation requise.** Tout fonctionne dans un seul fichier HTML.
@@ -88,3 +90,4 @@ Il utilise les librairies CDN suivantes :
 
 Créé avec ❤️ pour simplifier la vie des admins réseaux.
 *Version : 16.0 (Universal Edition)*
+
