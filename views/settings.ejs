@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres - Nexus Net</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="/dashboard" class="logo">NEXUS NET</a>
+            <div class="nav-links">
+                <a href="/dashboard" class="nav-link">Retour au Dashboard</a>
+            </div>
+        </nav>
+
+        <div class="auth-container">
+            <h2 class="auth-title">Paramètres du compte</h2>
+            
+            <% if (error) { %>
+                <div style="color: #f87171; background: rgba(248, 113, 113, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+                    <%= error %>
+                </div>
+            <% } %>
+            <% if (success) { %>
+                <div style="color: #4ade80; background: rgba(74, 222, 128, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+                    <%= success %>
+                </div>
+            <% } %>
+
+            <form action="/settings/update" method="POST">
+                <div class="category-header" style="margin-bottom: 15px; color: var(--accent-blue);">Profil</div>
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" value="<%= user.username %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="<%= user.email %>">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Mettre à jour le profil</button>
+            </form>
+
+            <form action="/settings/password" method="POST" style="margin-top: 30px;">
+                <div class="category-header" style="margin-bottom: 15px; color: var(--accent-purple);">Sécurité</div>
+                <div class="form-group">
+                    <label for="currentPassword">Mot de passe actuel</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Nouveau mot de passe</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Changer le mot de passe</button>
+            </form>
+
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <div class="category-header" style="margin-bottom: 15px; color: var(--accent-red);">Zone Danger</div>
+                <form action="/settings/delete" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et supprimera tous vos plans.');">
+                    <button type="submit" class="btn btn-danger" style="width: 100%; background: var(--accent-red); color: white;">Supprimer le compte</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
