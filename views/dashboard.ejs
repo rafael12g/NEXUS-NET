@@ -12,10 +12,38 @@
         <nav class="navbar">
             <a href="/" class="logo">NEXUS NET</a>
             <div class="nav-links">
-                <span class="nav-link">Bonjour, <%= user.username %></span>
-                <a href="/logout" class="nav-link">Déconnexion</a>
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="toggleDropdown()">
+                        Bonjour, <%= user.username %> 
+                        <span class="arrow">▼</span>
+                    </button>
+                    <div id="myDropdown" class="dropdown-content">
+                        <a href="/settings">Paramètres</a>
+                        <a href="/report-bug">Signaler un bug</a>
+                        <a href="/logout" style="color: var(--accent-red);">Déconnexion</a>
+                    </div>
+                </div>
             </div>
         </nav>
+
+        <script>
+            function toggleDropdown() {
+                document.getElementById("myDropdown").classList.toggle("show");
+            }
+
+            // Close the dropdown if the user clicks outside of it
+            window.onclick = function(event) {
+                if (!event.target.matches('.dropbtn') && !event.target.matches('.dropbtn *')) {
+                    var dropdowns = document.getElementsByClassName("dropdown-content");
+                    for (var i = 0; i < dropdowns.length; i++) {
+                        var openDropdown = dropdowns[i];
+                        if (openDropdown.classList.contains('show')) {
+                            openDropdown.classList.remove('show');
+                        }
+                    }
+                }
+            }
+        </script>
 
         <div class="dashboard-header">
             <h2>Mes Plans</h2>

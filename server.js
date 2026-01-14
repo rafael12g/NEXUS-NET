@@ -3,6 +3,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 const db = require('./database');
 
@@ -137,6 +138,75 @@ app.post('/api/save/:id', requireLogin, (req, res) => {
     db.query('UPDATE plans SET data = ? WHERE id = ? AND user_id = ?', [dataString, planId, req.session.userId], (err, result) => {
         if (err) return res.status(500).json({ success: false, error: err.message });
         res.json({ success: true });
+    });
+});
+
+// Settings Routes
+app.get('/settings', requireLogin, (req, res) => {
+    db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+        if (err || !results[0]) return res.redirect('/dashboard');
+        res.render('settings', { user: results[0], error: null, success: null });
+    });
+});
+
+app.post('/settings/update', requireLogin, (req, res) => {
+    const { username, email } = req.body;
+    db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, req.session.userId], (err, result) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.render('settings', { user: req.session.user, error: 'Ce nom d\'utilisateur est déjà pris', success: null });
+            }
+            return res.render('settings', { user: req.session.user, error: 'Erreur de base de données', success: null });
+        }
+        
+        req.session.user.username = username;
+        req.session.user.email = email;
+        
+         db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+            res.render('settings', { user: results[0], error: null, success: 'Profil mis à jour avec succès' });
+        });
+    });
+});
+
+app.post('/settings/password', requireLogin, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    
+    db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+        const user = results[0];
+        bcrypt.compare(currentPassword, user.password, (err, result) => {
+            if (result) {
+                bcrypt.hash(newPassword, 10, (err, hash) => {
+                    db.query('UPDATE users SET password = ? WHERE id = ?', [hash, req.session.userId], (err, result) => {
+                        res.render('settings', { user: user, error: null, success: 'Mot de passe modifié avec succès' });
+                    });
+                });
+            } else {
+                res.render('settings', { user: user, error: 'Mot de passe actuel incorrect', success: null });
+            }
+        });
+    });
+});
+
+app.post('/settings/delete', requireLogin, (req, res) => {
+    db.query('DELETE FROM plans WHERE user_id = ?', [req.session.userId], (err) => {
+        db.query('DELETE FROM users WHERE id = ?', [req.session.userId], (err) => {
+            req.session.destroy();
+            res.redirect('/');
+        });
+    });
+});
+
+// Bug Report Routes
+app.get('/report-bug', requireLogin, (req, res) => {
+    res.render('report-bug', { success: null, user: req.session.user });
+});
+
+app.post('/report-bug', requireLogin, (req, res) => {
+    const { title, description } = req.body;
+    const report = `[${new Date().toISOString()}] User: ${req.session.user.username} | Title: ${title} | Desc: ${description}\n`;
+    
+    fs.appendFile(path.join(__dirname, 'bug_reports.log'), report, (err) => {
+        res.render('report-bug', { success: 'Rapport envoyé avec succès. Merci !', user: req.session.user });
     });
 });
 
