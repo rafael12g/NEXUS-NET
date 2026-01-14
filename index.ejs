@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Net - Network Visualization</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="logo"><i class="fas fa-globe" style="color:var(--accent-green); margin-right:10px;"></i>NEXUS NET</div>
+            <div class="nav-links">
+                <% if (user) { %>
+                    <a href="/dashboard" class="nav-link">Dashboard</a>
+                    <a href="/logout" class="nav-link">Déconnexion</a>
+                <% } else { %>
+                    <a href="/login" class="nav-link">Connexion</a>
+                    <a href="/register" class="nav-link">Inscription</a>
+                <% } %>
+            </div>
+        </nav>
+
+        <div class="hero">
+            <h1>Visualisez vos réseaux complexes</h1>
+            <p>Nexus Net est l'outil ultime pour créer, gérer et visualiser des architectures réseau, des diagrammes de flux et des connexions complexes avec une interface moderne et intuitive.</p>
+            
+            <div class="cta-buttons">
+                <% if (user) { %>
+                    <a href="/dashboard" class="btn btn-primary btn-small"><i class="fas fa-rocket"></i> Accéder au Dashboard</a>
+                <% } else { %>
+                    <a href="/register" class="btn btn-primary btn-small"><i class="fas fa-user-plus"></i> Commencer Gratuitement</a>
+                    <a href="/login" class="btn btn-secondary btn-small"><i class="fas fa-sign-in-alt"></i> Se Connecter</a>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="stats-banner">
+            <div class="stat-item">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Web Based</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Possibilités</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">HD</div>
+                <div class="stat-label">Export PDF/PNG</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-label">Sécurisé</div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2 class="section-title">Fonctionnalités Puissantes</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-project-diagram"></i></div>
+                    <div class="feature-title">Visualisation Interactive</div>
+                    <div class="feature-desc">Créez des diagrammes dynamiques avec une interface glisser-déposer fluide. Zoomez, déplacez et organisez vos nœuds sans effort.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-export"></i></div>
+                    <div class="feature-title">Export Multi-Formats</div>
+                    <div class="feature-desc">Exportez vos créations en JSON pour la sauvegarde, ou en PDF et XML (Draw.io) pour le partage et la présentation.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-server"></i></div>
+                    <div class="feature-title">Bibliothèque Complète</div>
+                    <div class="feature-desc">Accédez à une large gamme d'icônes pour serveurs, routeurs, switchs, bases de données et équipements utilisateurs.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-magic"></i></div>
+                    <div class="feature-title">Outils Intelligents</div>
+                    <div class="feature-desc">Utilisez l'alignement automatique, le mode aimanté et les outils de liaison rapide pour structurer vos réseaux en un clin d'œil.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-paint-brush"></i></div>
+                    <div class="feature-title">Personnalisation Totale</div>
+                    <div class="feature-desc">Changez les couleurs, tailles, opacités et styles de connexion. Ajoutez vos propres images pour des diagrammes uniques.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                    <div class="feature-title">Sécurité & Privé</div>
+                    <div class="feature-desc">Vos plans sont sauvegardés de manière sécurisée dans votre espace personnel. Gérez vos projets en toute confidentialité.</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="#" class="footer-link">GitHub</a>
+                <a href="#" class="footer-link">Documentation</a>
+                <a href="#" class="footer-link">CGU</a>
+                <a href="#" class="footer-link">Contact</a>
+            </div>
+            <p>&copy; 2025 NEXUS NET. Tous droits réservés.</p>
+        </footer>
+    </div>
+</body>
+</html>
