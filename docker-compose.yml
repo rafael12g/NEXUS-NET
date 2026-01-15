@@ -6,10 +6,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DB_HOST=db
-      - DB_USER=nexus
-      - DB_PASS=nexus_password
-      - DB_NAME=nexus_net
+      - DB_HOST=
+      - DB_USER=
+      - DB_PASS=
+      - DB_NAME=
     depends_on:
       - db
     restart: always
