@@ -135,6 +135,85 @@
         }
         .item-btn i { font-size: 18px; margin-bottom: 4px; }
         .item-btn span { font-size: 9px; font-weight: 600; }
+        
+        /* --- MINIMAP --- */
+        #minimap {
+            position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px;
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 8px; z-index: 40;
+            padding: 5px; display: flex; flex-direction: column;
+        }
+        #minimap-canvas {
+            width: 100%; height: 100%; border-radius: 4px;
+            background: rgba(0,0,0,0.3); cursor: pointer;
+        }
+        #minimap-header {
+            font-size: 9px; font-weight: 700; color: var(--text-secondary);
+            text-transform: uppercase; padding: 5px; letter-spacing: 0.5px;
+        }
+        
+        /* --- LEGEND --- */
+        #legend {
+            position: absolute; top: 20px; left: 320px; min-width: 180px;
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 8px; z-index: 40;
+            padding: 15px; max-height: 400px; overflow-y: auto;
+        }
+        #legend.collapsed { height: auto; max-height: none; }
+        #legend-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; cursor: pointer;
+        }
+        #legend-header h3 {
+            margin: 0; font-size: 12px; font-weight: 700; color: var(--text-primary);
+        }
+        #legend-content {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 10px; font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .legend-item i {
+            font-size: 16px;
+        }
+        
+        /* --- STATISTICS --- */
+        #statistics {
+            position: absolute; bottom: 20px; left: 320px; min-width: 220px;
+            background: var(--panel-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color); border-radius: 8px; z-index: 40;
+            padding: 15px;
+        }
+        #statistics h3 {
+            margin: 0 0 10px 0; font-size: 12px; font-weight: 700;
+            color: var(--text-primary);
+        }
+        .stat-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+        }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { color: var(--text-secondary); }
+        .stat-value { color: var(--text-primary); font-weight: 700; }
+        
+        /* --- NAVIGATION CONTROLS --- */
+        #nav-controls {
+            position: absolute; top: 20px; right: 320px;
+            display: flex; flex-direction: column; gap: 8px; z-index: 40;
+        }
+        #nav-controls button {
+            width: 40px; height: 40px; border-radius: 8px;
+            background: var(--panel-bg); border: 1px solid var(--border-color);
+            color: var(--text-secondary); font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        #nav-controls button:hover {
+            background: rgba(255,255,255,0.1); color: white;
+            border-color: var(--accent-blue);
+        }
     </style>
 </head>
 <body>
@@ -189,6 +268,7 @@
             <div class="item-btn" onclick="addNode('firewall')"><i class="fas fa-shield-halved"></i><span>Firewall</span></div>
             <div class="item-btn" onclick="addNode('cloud')"><i class="fas fa-cloud"></i><span>Internet</span></div>
             <div class="item-btn" onclick="addNode('db')"><i class="fas fa-database"></i><span>Data</span></div>
+            <div class="item-btn" onclick="addNode('docker')"><i class="fab fa-docker" style="color:#2496ED;"></i><span>Docker</span></div>
         </div>
 
         <div class="category-header">Utilisateurs</div>
@@ -204,6 +284,11 @@
             <div class="item-btn" onclick="document.getElementById('customImg').click()"><i class="fas fa-image"></i><span>Image</span></div>
         </div>
         <input type="file" id="customImg" accept="image/*" style="display:none;">
+
+        <div class="section-header">Docker</div>
+        <button class="btn-primary" onclick="importFromDocker()" style="width:100%; justify-content:center;">
+            <i class="fab fa-docker"></i> Importer depuis Docker
+        </button>
 
         <div class="section-header">
             Connexion
@@ -257,6 +342,30 @@
             <input type="range" id="edit-opacity" min="0" max="100" value="100" oninput="updateNode()">
             <label>Taille (px)</label>
             <input type="number" id="edit-size" min="20" max="300" oninput="updateNode()" style="width:100%; padding:5px; background:var(--bg-dark); border:1px solid var(--border-color); color:#fff; border-radius:4px;">
+            
+            <div id="docker-controls" style="display:none; margin-top:15px;">
+                <div class="section-header" style="margin-top:0">Contrôles Docker</div>
+                <div id="docker-status" style="padding:10px; background:rgba(0,0,0,0.3); border-radius:6px; margin-bottom:10px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span id="docker-status-indicator" style="width:12px; height:12px; border-radius:50%; background:#94a3b8;"></span>
+                        <span id="docker-status-text" style="font-size:12px; color:var(--text-secondary);">Non connecté</span>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px;">
+                    <button class="btn-ghost" onclick="dockerAction('start')" style="font-size:10px; padding:6px;">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="btn-ghost" onclick="dockerAction('stop')" style="font-size:10px; padding:6px;">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                    <button class="btn-ghost" onclick="dockerAction('restart')" style="font-size:10px; padding:6px;">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                <button class="btn-ghost" onclick="refreshDockerStatus()" style="width:100%; margin-top:5px; font-size:11px;">
+                    <i class="fas fa-sync"></i> Rafraîchir
+                </button>
+            </div>
         </div>
 
         <div id="insp-content-edge" style="display:none;">
@@ -277,6 +386,55 @@
             <button class="btn-ghost" style="flex:1;" onclick="closeInspector()">Fermer</button>
         </div>
     </div>
+    
+    <!-- Minimap -->
+    <div id="minimap">
+        <div id="minimap-header">Vue d'ensemble</div>
+        <canvas id="minimap-canvas"></canvas>
+    </div>
+    
+    <!-- Legend -->
+    <div id="legend">
+        <div id="legend-header" onclick="toggleLegend()">
+            <h3><i class="fas fa-list"></i> Légende</h3>
+            <i class="fas fa-chevron-up" id="legend-toggle-icon"></i>
+        </div>
+        <div id="legend-content"></div>
+    </div>
+    
+    <!-- Statistics -->
+    <div id="statistics">
+        <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
+        <div class="stat-item">
+            <span class="stat-label">Nœuds</span>
+            <span class="stat-value" id="stat-nodes">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Connexions</span>
+            <span class="stat-value" id="stat-edges">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Docker Running</span>
+            <span class="stat-value" id="stat-docker-running">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Docker Stopped</span>
+            <span class="stat-value" id="stat-docker-stopped">0</span>
+        </div>
+    </div>
+    
+    <!-- Navigation Controls -->
+    <div id="nav-controls">
+        <button onclick="network.moveTo({scale: network.getScale() * 1.2})" title="Zoom In">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button onclick="network.moveTo({scale: network.getScale() * 0.8})" title="Zoom Out">
+            <i class="fas fa-minus"></i>
+        </button>
+        <button onclick="network.fit()" title="Fit to Screen">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
 
     <script>
         // CONFIG
@@ -290,7 +448,8 @@
             pc: {code:'\uf108', fa:'fa-solid fa-desktop'},
             printer: {code:'\uf02f', fa:'fa-solid fa-print'},
             wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
-            note: {code:'\uf249', fa:'fa-solid fa-sticky-note'}
+            note: {code:'\uf249', fa:'fa-solid fa-sticky-note'},
+            docker: {code:'\uf395', fa:'fa-brands fa-docker'}
         };
 
         let nodes = new vis.DataSet([]);
@@ -767,6 +926,27 @@
                     snapToGrid(params.nodes);
                 }
                 savePlan(false);
+                updateMinimap();
+            });
+            
+            // Update UI on changes
+            nodes.on('*', function() {
+                updateStatistics();
+                updateLegend();
+                updateMinimap();
+            });
+            
+            edges.on('*', function() {
+                updateStatistics();
+                updateMinimap();
+            });
+            
+            network.on('zoom', function() {
+                updateMinimap();
+            });
+            
+            network.on('dragStart', function() {
+                updateMinimap();
             });
 
             // Auto-save every 30s
@@ -806,6 +986,11 @@
                 const file = e.dataTransfer.files[0];
                 if(file && file.name.endsWith('.json')) loadFile(file);
             });
+            
+            // Initialize UI components
+            updateStatistics();
+            updateLegend();
+            setTimeout(updateMinimap, 500);
         };
 
         // --- ALIGNMENT TOOLS ---
@@ -919,7 +1104,8 @@
             const labelInput = document.getElementById('nodeLabel').value;
             const label = labelInput || (type === 'note' ? "Note" : type.charAt(0).toUpperCase() + type.slice(1));
             const ip = document.getElementById('nodeIP').value;
-            const color = document.getElementById('nodeColor').value;
+            // Use Docker blue (#2496ED) for docker type, otherwise use selected color
+            const color = type === 'docker' ? '#2496ED' : document.getElementById('nodeColor').value;
 
             let node = {
                 id: Date.now(),
@@ -993,6 +1179,19 @@
             let s = node.size || (node.icon ? node.icon.size : 40);
             if(node.font && node.shape === 'box') s = node.font.size;
             document.getElementById('edit-size').value = s;
+            
+            // Show Docker controls if it's a Docker node
+            const dockerControls = document.getElementById('docker-controls');
+            if(d.type === 'docker') {
+                dockerControls.style.display = 'block';
+                if(d.dockerId) {
+                    refreshDockerStatus();
+                } else {
+                    document.getElementById('docker-status-text').innerText = 'Container non lié';
+                }
+            } else {
+                dockerControls.style.display = 'none';
+            }
         }
 
         function updateNode() {
@@ -1171,6 +1370,331 @@
             ctxL.fillStyle = '#1e293b';
             ctxL.fillRect(0,0,20,20);
         }
+        
+        // --- DOCKER FUNCTIONS ---
+        async function importFromDocker() {
+            try {
+                const response = await fetch('/api/docker/containers');
+                const result = await response.json();
+                
+                if(!result.success) {
+                    showToast('Docker non disponible');
+                    return;
+                }
+                
+                // Create a modal to select containers
+                const containers = result.containers;
+                if(containers.length === 0) {
+                    showToast('Aucun container trouvé');
+                    return;
+                }
+                
+                let modal = document.createElement('div');
+                modal.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; display:flex; align-items:center; justify-content:center;';
+                
+                let content = document.createElement('div');
+                content.style.cssText = 'background:var(--panel-bg); padding:30px; border-radius:12px; max-width:600px; max-height:80vh; overflow-y:auto; border:1px solid var(--border-color);';
+                
+                let html = '<h2 style="margin-top:0; color:var(--text-primary);">Importer des Containers Docker</h2>';
+                html += '<div style="display:flex; flex-direction:column; gap:10px;">';
+                
+                containers.forEach(c => {
+                    const statusColor = c.state === 'running' ? '#4ade80' : (c.state === 'paused' ? '#fbbf24' : '#f87171');
+                    html += `<div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid ${statusColor}; cursor:pointer;" onclick="addDockerContainer('${c.id}', '${c.name}', '${c.state}')">`;
+                    html += `<div style="font-weight:600; color:var(--text-primary);">${c.name}</div>`;
+                    html += `<div style="font-size:11px; color:var(--text-secondary);">Image: ${c.image} | État: ${c.state}</div>`;
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+                html += '<button class="btn-ghost" onclick="this.parentElement.parentElement.remove()" style="margin-top:20px; width:100%;">Fermer</button>';
+                
+                content.innerHTML = html;
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+            } catch(err) {
+                console.error(err);
+                showToast('Erreur lors de l\'import Docker');
+            }
+        }
+        
+        function addDockerContainer(dockerId, containerName, state) {
+            const color = '#2496ED';
+            const node = {
+                id: Date.now(),
+                label: `\n<b>${containerName}</b>\n${state}`,
+                _data: { 
+                    name: containerName, 
+                    ip: '', 
+                    type: 'docker', 
+                    color: color, 
+                    size: 45, 
+                    opacity: 100,
+                    dockerId: dockerId,
+                    dockerState: state
+                },
+                icon: { code: icons.docker.code, color: color, face: "'Font Awesome 6 Free'" }
+            };
+            
+            nodes.add(node);
+            updateSelects();
+            savePlan(false);
+            showToast(`Container ${containerName} ajouté`);
+            
+            // Close modal
+            document.querySelectorAll('body > div').forEach(el => {
+                if(el.style.position === 'fixed' && el.style.zIndex === '1000') el.remove();
+            });
+        }
+        
+        async function refreshDockerStatus() {
+            if(!selectedNodeId) return;
+            
+            const node = nodes.get(selectedNodeId);
+            const d = node._data || {};
+            
+            if(!d.dockerId) {
+                showToast('Container non lié');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/docker/containers/${d.dockerId}/status`);
+                const result = await response.json();
+                
+                if(!result.success) {
+                    updateDockerStatusUI('disconnected', 'Non trouvé');
+                    return;
+                }
+                
+                const status = result.status;
+                let state = 'disconnected';
+                let text = status.state;
+                
+                if(status.running) {
+                    state = 'running';
+                    text = 'Running';
+                } else if(status.paused) {
+                    state = 'paused';
+                    text = 'Paused';
+                } else if(status.restarting) {
+                    state = 'restarting';
+                    text = 'Restarting';
+                } else {
+                    state = 'stopped';
+                    text = 'Stopped';
+                }
+                
+                updateDockerStatusUI(state, text);
+                
+                // Update node data
+                d.dockerState = text;
+                nodes.update({ id: selectedNodeId, _data: d });
+                
+            } catch(err) {
+                console.error(err);
+                updateDockerStatusUI('disconnected', 'Erreur');
+            }
+        }
+        
+        function updateDockerStatusUI(state, text) {
+            const indicator = document.getElementById('docker-status-indicator');
+            const statusText = document.getElementById('docker-status-text');
+            
+            const colors = {
+                running: '#4ade80',
+                stopped: '#f87171',
+                paused: '#fbbf24',
+                restarting: '#fbbf24',
+                disconnected: '#94a3b8'
+            };
+            
+            indicator.style.background = colors[state] || '#94a3b8';
+            statusText.innerText = text;
+        }
+        
+        async function dockerAction(action) {
+            if(!selectedNodeId) return;
+            
+            const node = nodes.get(selectedNodeId);
+            const d = node._data || {};
+            
+            if(!d.dockerId) {
+                showToast('Container non lié');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/docker/containers/${d.dockerId}/${action}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if(result.success) {
+                    showToast(result.message);
+                    setTimeout(refreshDockerStatus, 500);
+                } else {
+                    showToast('Erreur: ' + result.error);
+                }
+                
+            } catch(err) {
+                console.error(err);
+                showToast('Erreur de connexion');
+            }
+        }
+        
+        // --- UI ENHANCEMENT FUNCTIONS ---
+        function updateStatistics() {
+            const nodeCount = nodes.length;
+            const edgeCount = edges.length;
+            
+            document.getElementById('stat-nodes').innerText = nodeCount;
+            document.getElementById('stat-edges').innerText = edgeCount;
+            
+            // Count Docker containers by state
+            let dockerRunning = 0;
+            let dockerStopped = 0;
+            
+            nodes.get().forEach(n => {
+                if(n._data && n._data.type === 'docker') {
+                    const state = n._data.dockerState || '';
+                    if(state.toLowerCase().includes('running')) {
+                        dockerRunning++;
+                    } else {
+                        dockerStopped++;
+                    }
+                }
+            });
+            
+            document.getElementById('stat-docker-running').innerText = dockerRunning;
+            document.getElementById('stat-docker-stopped').innerText = dockerStopped;
+        }
+        
+        function updateLegend() {
+            const legendContent = document.getElementById('legend-content');
+            legendContent.innerHTML = '';
+            
+            const types = new Set();
+            nodes.get().forEach(n => {
+                if(n._data && n._data.type) {
+                    types.add(n._data.type);
+                }
+            });
+            
+            types.forEach(type => {
+                const def = icons[type];
+                if(def) {
+                    const item = document.createElement('div');
+                    item.className = 'legend-item';
+                    
+                    const color = type === 'docker' ? '#2496ED' : '#38bdf8';
+                    item.innerHTML = `<i class="${def.fa}" style="color:${color};"></i><span>${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
+                    legendContent.appendChild(item);
+                }
+            });
+            
+            if(types.size === 0) {
+                legendContent.innerHTML = '<div style="font-size:10px; color:var(--text-secondary); text-align:center;">Aucun élément</div>';
+            }
+        }
+        
+        function toggleLegend() {
+            const content = document.getElementById('legend-content');
+            const icon = document.getElementById('legend-toggle-icon');
+            
+            if(content.style.display === 'none') {
+                content.style.display = 'flex';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                content.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
+            }
+        }
+        
+        function updateMinimap() {
+            const canvas = document.getElementById('minimap-canvas');
+            if(!canvas || !network) return;
+            
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const positions = network.getPositions();
+            const nodeIds = Object.keys(positions);
+            
+            if(nodeIds.length === 0) return;
+            
+            // Find bounds
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            nodeIds.forEach(id => {
+                const pos = positions[id];
+                minX = Math.min(minX, pos.x);
+                maxX = Math.max(maxX, pos.x);
+                minY = Math.min(minY, pos.y);
+                maxY = Math.max(maxY, pos.y);
+            });
+            
+            const width = maxX - minX || 100;
+            const height = maxY - minY || 100;
+            const scale = Math.min((rect.width - 20) / width, (rect.height - 20) / height);
+            
+            // Draw nodes
+            ctx.fillStyle = '#38bdf8';
+            nodeIds.forEach(id => {
+                const pos = positions[id];
+                const x = (pos.x - minX) * scale + 10;
+                const y = (pos.y - minY) * scale + 10;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Draw edges
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            edges.get().forEach(edge => {
+                const fromPos = positions[edge.from];
+                const toPos = positions[edge.to];
+                if(fromPos && toPos) {
+                    ctx.beginPath();
+                    ctx.moveTo((fromPos.x - minX) * scale + 10, (fromPos.y - minY) * scale + 10);
+                    ctx.lineTo((toPos.x - minX) * scale + 10, (toPos.y - minY) * scale + 10);
+                    ctx.stroke();
+                }
+            });
+            
+            // Draw viewport rectangle
+            const viewport = network.getViewPosition();
+            const viewScale = network.getScale();
+            const containerRect = document.getElementById('network-container').getBoundingClientRect();
+            
+            const viewWidth = (containerRect.width / viewScale);
+            const viewHeight = (containerRect.height / viewScale);
+            
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(
+                (viewport.x - minX) * scale + 10,
+                (viewport.y - minY) * scale + 10,
+                viewWidth * scale,
+                viewHeight * scale
+            );
+        }
+        
+        // Add keyboard shortcut for "F" to fit view
+        document.addEventListener('keydown', function(e) {
+            if(e.key === 'f' || e.key === 'F') {
+                if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+                    network.fit();
+                    e.preventDefault();
+                }
+            }
+        });
     </script>
 </body>
 </html>
