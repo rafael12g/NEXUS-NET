@@ -1055,49 +1055,51 @@
 
         // --- DRAW.IO EXPORT LOGIC ---
         function exportDrawIO() {
-            const allNodes = nodes.get();
-            const allEdges = edges.get();
-            const positions = network.getPositions(allNodes.map(n => n.id));
+            try {
+                const allNodes = nodes.get();
+                const allEdges = edges.get();
+                const positions = network.getPositions(allNodes.map(n => n.id));
 
-            let xml = '<?xml version="1.0" encoding="UTF-8"?>';
-            xml += '<mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">';
-            xml += '<root><mxCell id="0"/><mxCell id="1" parent="0"/>';
+                let xml = '<?xml version="1.0" encoding="UTF-8"?>';
+                xml += '<mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">';
+                xml += '<root><mxCell id="0"/><mxCell id="1" parent="0"/>';
 
-            allNodes.forEach(n => {
-                const pos = positions[n.id];
-                // Conversion couleur Hex
-                let color = n.color ? (n.color.background || n.color) : '#ffffff';
-                let label = n._data.name;
-                
-                // Style Drawio
-                let style = "";
-                if(n.shape === 'image' && n._data.img) {
-                    // Embed image base64
-                    style = `shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=${n._data.img};`;
-                } else if (n.shape === 'box') {
-                    style = `shape=rectangle;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=${n.color.border||color};opacity=${n._data.opacity||100};`;
-                } else {
-                    // Standard shape for icons (rectangle arrondi)
-                    style = `rounded=1;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=none;fontColor=#ffffff;`;
-                }
+                allNodes.forEach(n => {
+                    const pos = positions[n.id];
+                    // Conversion couleur Hex
+                    let color = n.color ? (n.color.background || n.color) : '#ffffff';
+                    let label = n._data.name;
+                    
+                    // Style Drawio
+                    let style = "";
+                    if(n.shape === 'image' && n._data.img) {
+                        // Embed image base64
+                        style = `shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=${n._data.img};`;
+                    } else if (n.shape === 'box') {
+                        style = `shape=rectangle;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=${n.color.border||color};opacity=${n._data.opacity||100};`;
+                    } else {
+                        // Standard shape for icons (rectangle arrondi)
+                        style = `rounded=1;whiteSpace=wrap;html=1;fillColor=${color};strokeColor=none;fontColor=#ffffff;`;
+                    }
 
-                xml += `<mxCell id="${n.id}" value="${label}" style="${style}" vertex="1" parent="1">`;
-                xml += `<mxGeometry x="${pos.x}" y="${pos.y}" width="${n.size}" height="${n.size}" as="geometry"/>`;
-                xml += `</mxCell>`;
-            });
+                    xml += `<mxCell id="${n.id}" value="${label}" style="${style}" vertex="1" parent="1">`;
+                    xml += `<mxGeometry x="${pos.x}" y="${pos.y}" width="${n.size}" height="${n.size}" as="geometry"/>`;
+                    xml += `</mxCell>`;
+                });
 
-            allEdges.forEach(e => {
-                let color = e.color ? (e.color.color || e.color) : '#000000';
-                let style = `edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${color};strokeWidth=${e.width};`;
-                if(e.dashes) style += "dashed=1;";
+                allEdges.forEach(e => {
+                    let color = e.color ? (e.color.color || e.color) : '#000000';
+                    let style = `edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=${color};strokeWidth=${e.width};`;
+                    if(e.dashes) style += "dashed=1;";
 
-                xml += `<mxCell id="edge_${e.id}" edge="1" parent="1" source="${e.from}" target="${e.to}" style="${style}">`;
-                xml += `<mxGeometry relative="1" as="geometry"/></mxCell>`;
-            });
+                    xml += `<mxCell id="edge_${e.id}" edge="1" parent="1" source="${e.from}" target="${e.to}" style="${style}">`;
+                    xml += `<mxGeometry relative="1" as="geometry"/></mxCell>`;
+                });
 
-            xml += '</root></mxGraphModel>';
+                xml += '</root></mxGraphModel>';
 
-            downloadFile(xml, 'nexus_export.xml', 'application/xml');
+                downloadFile(xml, 'nexus_export.xml', 'application/xml');
+            } catch(e) { console.error("Export error", e); alert("Erreur lors de l'export DrawIO"); }
         }
 
         // --- STANDARD FUNCTIONS ---
