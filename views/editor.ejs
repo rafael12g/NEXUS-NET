@@ -463,6 +463,7 @@
         const rawPlanData = <%- plan.data ? JSON.stringify(plan.data) : 'null' %>;
 
         window.onload = function() {
+            try {
             // --- COLOR PALETTE ---
             const palette = document.getElementById('colorPalette');
             const nodeColorInput = document.getElementById('nodeColor');
@@ -987,6 +988,10 @@
             updateStatistics();
             updateLegend();
             setTimeout(updateMinimap, 500);
+            } catch(e) {
+                alert("Erreur critique: " + e.message + "\n" + e.stack);
+                console.error(e);
+            }
         };
 
         // --- ALIGNMENT TOOLS ---
