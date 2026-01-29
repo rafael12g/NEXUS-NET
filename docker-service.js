@@ -7,7 +7,10 @@ class DockerService {
         const isWindows = os.platform() === 'win32';
         
         try {
-            if (isWindows) {
+            // Allows custom configuration via environment variables (DOCKER_HOST, DOCKER_PORT, etc.)
+            if (process.env.DOCKER_HOST) {
+                this.docker = new Docker();
+            } else if (isWindows) {
                 // Windows: use named pipe for security
                 this.docker = new Docker({ socketPath: '//./pipe/docker_engine' });
             } else {
