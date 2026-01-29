@@ -157,43 +157,19 @@
             text-transform: uppercase; padding: 5px; letter-spacing: 0.5px;
         }
         
-        /* --- LEGEND --- */
-        #legend {
-            position: absolute; top: 20px; left: 320px; min-width: 180px;
-            background: var(--panel-bg); backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color); border-radius: 8px; z-index: 40;
-            padding: 15px; max-height: 400px; overflow-y: auto;
-        }
-        #legend.collapsed { height: auto; max-height: none; }
-        #legend-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; cursor: pointer;
-        }
-        #legend-header h3 {
-            margin: 0; font-size: 12px; font-weight: 700; color: var(--text-primary);
-        }
+        /* --- LEGEND (MOVED TO SIDEBAR) --- */
         #legend-content {
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 8px; margin-top: 10px;
         }
         .legend-item {
             display: flex; align-items: center; gap: 10px; font-size: 11px;
             color: var(--text-secondary);
         }
         .legend-item i {
-            font-size: 16px;
+            font-size: 14px;
         }
         
-        /* --- STATISTICS --- */
-        #statistics {
-            position: absolute; bottom: 20px; left: 320px; min-width: 220px;
-            background: var(--panel-bg); backdrop-filter: blur(10px);
-            border: 1px solid var(--border-color); border-radius: 8px; z-index: 40;
-            padding: 15px;
-        }
-        #statistics h3 {
-            margin: 0 0 10px 0; font-size: 12px; font-weight: 700;
-            color: var(--text-primary);
-        }
+        /* --- STATISTICS (MOVED TO SIDEBAR) --- */
         .stat-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 6px 0; border-bottom: 1px solid var(--border-color);
@@ -313,6 +289,31 @@
             <i class="fas fa-link"></i> CONNECTER
         </button>
 
+        <!-- INTEGRATED STATS & LEGEND -->
+        <div class="section-header">Infos Réseau</div>
+        
+        <div style="background: rgba(255,255,255,0.05); border-radius: 6px; padding: 8px; margin-bottom: 15px;">
+             <div class="stat-item">
+                <span class="stat-label">Nœuds</span>
+                <span class="stat-value" id="stat-nodes">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Connexions</span>
+                <span class="stat-value" id="stat-edges">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Docker Running</span>
+                <span class="stat-value" id="stat-docker-running" style="color:#4ade80">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Docker Stopped</span>
+                <span class="stat-value" id="stat-docker-stopped" style="color:#f87171">0</span>
+            </div>
+        </div>
+
+        <div class="section-header">Légende Active</div>
+        <div id="legend-content" style="margin-bottom: 15px;"></div>
+
         <div class="section-header">Exports</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
             <button class="btn-ghost" onclick="savePlan(true)"><i class="fas fa-save"></i> Save</button>
@@ -425,37 +426,7 @@
             <span class="stat-label">Docker Running</span>
             <span class="stat-value" id="stat-docker-running">0</span>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Docker Stopped</span>
-            <span class="stat-value" id="stat-docker-stopped">0</span>
-        </div>
-    </div>
-    
-    <!-- Navigation Controls -->
-    <div id="nav-controls">
-        <button onclick="network.moveTo({scale: network.getScale() * 1.2})" title="Zoom In">
-            <i class="fas fa-plus"></i>
-        </button>
-        <button onclick="network.moveTo({scale: network.getScale() * 0.8})" title="Zoom Out">
-            <i class="fas fa-minus"></i>
-        </button>
-        <button onclick="network.fit()" title="Fit to Screen">
-            <i class="fas fa-expand"></i>
-        </button>
-    </div>
-
-    <script>
-        // CONFIG
-        const icons = {
-            server: {code:'\uf233', fa:'fa-solid fa-server'},
-            router: {code:'\uf0ec', fa:'fa-solid fa-network-wired'},
-            switch: {code:'\uf2db', fa:'fa-solid fa-microchip'},
-            firewall: {code:'\uf132', fa:'fa-solid fa-shield-halved'},
-            cloud: {code:'\uf0c2', fa:'fa-solid fa-cloud'},
-            db: {code:'\uf1c0', fa:'fa-solid fa-database'},
-            pc: {code:'\uf108', fa:'fa-solid fa-desktop'},
-            printer: {code:'\uf02f', fa:'fa-solid fa-print'},
-            wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
+        <   wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
             note: {code:'\uf249', fa:'fa-solid fa-sticky-note'},
             docker: {code:'\uf395', fa:'fa-brands fa-docker'}
         };
@@ -1835,16 +1806,7 @@
             const legendContent = document.getElementById('legend-content');
             legendContent.innerHTML = '';
             
-            const types = new Set();
-            nodes.get().forEach(n => {
-                if(n._data && n._data.type) {
-                    types.add(n._data.type);
-                }
-            });
-            
-            types.forEach(type => {
-                const def = icons[type];
-                if(def) {
+            // Deprecated as legend is now integrated in sidebar   if(def) {
                     const item = document.createElement('div');
                     item.className = 'legend-item';
                     
