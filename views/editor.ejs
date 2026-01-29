@@ -49,6 +49,9 @@
         
         .btn-drawio { background: #f08705; color: white; border: 1px solid #d97706; }
         .btn-drawio:hover { background: #d97706; }
+        
+        .btn-danger { background: linear-gradient(135deg, var(--accent-red), #dc2626); color: white; box-shadow: 0 4px 10px rgba(248, 113, 113, 0.3); }
+        .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(248, 113, 113, 0.5); }
 
         .btn-icon { padding: 8px; width: 36px; height: 36px; font-size: 16px; border-radius: 6px; }
         .btn-icon.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
@@ -1121,7 +1124,9 @@
                 node.shapeProperties = { borderDashes: false };
             } else {
                 const def = icons[type] || icons.server;
-                node.icon = { code: def.code, color: color, face: "'Font Awesome 6 Free'" };
+                // Use correct font face for brands vs solid icons
+                const fontFace = type === 'docker' ? "'Font Awesome 6 Brands'" : "'Font Awesome 6 Free'";
+                node.icon = { code: def.code, color: color, face: fontFace };
                 node._data.fa = def.fa;
             }
 
@@ -1434,7 +1439,7 @@
                     dockerId: dockerId,
                     dockerState: state
                 },
-                icon: { code: icons.docker.code, color: color, face: "'Font Awesome 6 Free'" }
+                icon: { code: icons.docker.code, color: color, face: "'Font Awesome 6 Brands'" }
             };
             
             nodes.add(node);
