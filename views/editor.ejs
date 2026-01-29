@@ -402,31 +402,31 @@
         <canvas id="minimap-canvas"></canvas>
     </div>
     
-    <!-- Legend -->
-    <div id="legend">
-        <div id="legend-header" onclick="toggleLegend()">
-            <h3><i class="fas fa-list"></i> Légende</h3>
-            <i class="fas fa-chevron-up" id="legend-toggle-icon"></i>
-        </div>
-        <div id="legend-content"></div>
+    <!-- Navigation Controls -->
+    <div id="nav-controls">
+        <button onclick="network.moveTo({scale: network.getScale() * 1.2})" title="Zoom In">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button onclick="network.moveTo({scale: network.getScale() * 0.8})" title="Zoom Out">
+            <i class="fas fa-minus"></i>
+        </button>
+        <button onclick="network.fit()" title="Fit to Screen">
+            <i class="fas fa-expand"></i>
+        </button>
     </div>
-    
-    <!-- Statistics -->
-    <div id="statistics">
-        <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
-        <div class="stat-item">
-            <span class="stat-label">Nœuds</span>
-            <span class="stat-value" id="stat-nodes">0</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Connexions</span>
-            <span class="stat-value" id="stat-edges">0</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Docker Running</span>
-            <span class="stat-value" id="stat-docker-running">0</span>
-        </div>
-        <   wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
+
+    <script>
+        // CONFIG
+        const icons = {
+            server: {code:'\uf233', fa:'fa-solid fa-server'},
+            router: {code:'\uf0ec', fa:'fa-solid fa-network-wired'},
+            switch: {code:'\uf2db', fa:'fa-solid fa-microchip'},
+            firewall: {code:'\uf132', fa:'fa-solid fa-shield-halved'},
+            cloud: {code:'\uf0c2', fa:'fa-solid fa-cloud'},
+            db: {code:'\uf1c0', fa:'fa-solid fa-database'},
+            pc: {code:'\uf108', fa:'fa-solid fa-desktop'},
+            printer: {code:'\uf02f', fa:'fa-solid fa-print'},
+            wifi: {code:'\uf1eb', fa:'fa-solid fa-wifi'},
             note: {code:'\uf249', fa:'fa-solid fa-sticky-note'},
             docker: {code:'\uf395', fa:'fa-brands fa-docker'}
         };
