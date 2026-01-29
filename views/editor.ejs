@@ -291,8 +291,11 @@
         <input type="file" id="customImg" accept="image/*" style="display:none;">
 
         <div class="section-header">Docker</div>
-        <button class="btn-primary" onclick="importFromDocker()" style="width:100%; justify-content:center;">
-            <i class="fab fa-docker"></i> Importer depuis Docker
+        <button class="btn-primary" onclick="importFromDocker()" style="width:100%; justify-content:center; margin-bottom: 8px;">
+            <i class="fab fa-docker"></i> Importer Sélectif
+        </button>
+        <button class="btn-primary" onclick="generateDockerSchema()" style="width:100%; justify-content:center; background: var(--accent-green);">
+            <i class="fas fa-project-diagram"></i> Générer Schéma
         </button>
 
         <div class="section-header">
