@@ -1460,7 +1460,7 @@
         }
         
         function addDockerContainer(dockerId, containerName, state) {
-            const color = DOCKER_BLUE;
+            const color = getStatusColor(state);
             const node = {
                 id: Date.now(),
                 label: `\n<b>${escapeHtml(containerName)}</b>\n${escapeHtml(state)}`,
@@ -1528,9 +1528,18 @@
                 
                 updateDockerStatusUI(state, text);
                 
-                // Update node data
+                // Update node data AND COLOR
                 d.dockerState = text;
-                nodes.update({ id: selectedNodeId, _data: d });
+                const newColor = getStatusColor(text);
+                
+                // Construct update object
+                const updateObj = { 
+                    id: selectedNodeId, 
+                    _data: {...d, color: newColor},
+                    icon: { ...node.icon, color: newColor }
+                };
+                
+                nodes.update(updateObj);
                 
             } catch(err) {
                 console.error(err);
