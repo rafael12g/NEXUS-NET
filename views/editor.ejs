@@ -1694,21 +1694,51 @@
         
         function updateLegend() {
             const legendContent = document.getElementById('legend-content');
+            if(!legendContent) return;
             legendContent.innerHTML = '';
             
-            // Deprecated as legend is now integrated in sidebar   if(def) {
-                    const item = document.createElement('div');
-                    item.className = 'legend-item';
-                    
-                    const color = type === 'docker' ? DOCKER_BLUE : '#38bdf8';
-                    item.innerHTML = `<i class="${def.fa}" style="color:${color};"></i><span>${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
-                    legendContent.appendChild(item);
-                }
+            const types = new Set();
+            nodes.get().forEach(n => {
+                if(n._data && n._data.type) types.add(n._data.type);
             });
             
             if(types.size === 0) {
                 legendContent.innerHTML = '<div style="font-size:10px; color:var(--text-secondary); text-align:center;">Aucun élément</div>';
+                return;
             }
+
+            types.forEach(type => {
+                let iconClass = 'fas fa-circle';
+                let color = '#38bdf8';
+                
+                if (type === 'docker') {
+                    iconClass = 'fab fa-docker';
+                    color = '#0ea5e9';
+                } else if (type === 'server') {
+                    iconClass = 'fas fa-server';
+                    color = '#ffffff';
+                } else if (type === 'switch') {
+                    iconClass = 'fas fa-network-wired';
+                    color = '#a8a29e';
+                } else if (type === 'router') {
+                    iconClass = 'fas fa-route';
+                    color = '#f59e0b';
+                } else if (type === 'pc') {
+                    iconClass = 'fas fa-desktop';
+                    color = '#38bdf8';
+                } else if (type === 'firewall') {
+                    iconClass = 'fas fa-shield-alt';
+                    color = '#ef4444';
+                } else if (type === 'comm') {
+                   // Skip comm nodes if needed
+                   return;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `<i class="${iconClass}" style="color:${color}; width:20px; text-align:center;"></i><span>${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
+                legendContent.appendChild(item);
+            });
         }
         
         function toggleLegend() {
