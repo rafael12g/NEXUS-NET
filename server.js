@@ -214,6 +214,12 @@ app.post('/report-bug', requireLogin, (req, res) => {
 });
 
 // Docker API Routes
+// Helper function to validate container ID format
+function isValidContainerId(id) {
+    // Docker container IDs are typically 64-character hex strings or the first 12 characters
+    return /^[a-f0-9]{12,64}$/i.test(id);
+}
+
 // GET /api/docker/containers - Liste tous les containers
 app.get('/api/docker/containers', requireLogin, async (req, res) => {
     const result = await dockerService.listContainers(true);
@@ -222,24 +228,36 @@ app.get('/api/docker/containers', requireLogin, async (req, res) => {
 
 // GET /api/docker/containers/:id/status - État d'un container spécifique
 app.get('/api/docker/containers/:id/status', requireLogin, async (req, res) => {
+    if (!isValidContainerId(req.params.id)) {
+        return res.status(400).json({ success: false, error: 'Invalid container ID format' });
+    }
     const result = await dockerService.getContainerStatus(req.params.id);
     res.json(result);
 });
 
 // POST /api/docker/containers/:id/start - Démarrer un container
 app.post('/api/docker/containers/:id/start', requireLogin, async (req, res) => {
+    if (!isValidContainerId(req.params.id)) {
+        return res.status(400).json({ success: false, error: 'Invalid container ID format' });
+    }
     const result = await dockerService.startContainer(req.params.id);
     res.json(result);
 });
 
 // POST /api/docker/containers/:id/stop - Arrêter un container
 app.post('/api/docker/containers/:id/stop', requireLogin, async (req, res) => {
+    if (!isValidContainerId(req.params.id)) {
+        return res.status(400).json({ success: false, error: 'Invalid container ID format' });
+    }
     const result = await dockerService.stopContainer(req.params.id);
     res.json(result);
 });
 
 // POST /api/docker/containers/:id/restart - Redémarrer un container
 app.post('/api/docker/containers/:id/restart', requireLogin, async (req, res) => {
+    if (!isValidContainerId(req.params.id)) {
+        return res.status(400).json({ success: false, error: 'Invalid container ID format' });
+    }
     const result = await dockerService.restartContainer(req.params.id);
     res.json(result);
 });

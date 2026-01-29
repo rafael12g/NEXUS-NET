@@ -1,6 +1,6 @@
 # 🌐 Nexus NET - Universal Network Architect
 
-**Version 0.2.0** - Docker Integration & Enhanced UI
+**Version 2.0.0** - Docker Integration & Enhanced UI
 
 **Nexus NET** est un outil de cartographie réseau et de gestion d'infrastructure conçu pour les administrateurs systèmes, les architectes réseaux et les DevOps. Il offre une interface moderne, sombre ("Cyberpunk/Dark Mode") et fluide pour concevoir des topologies complexes et gérer des containers Docker directement dans le navigateur.
 
@@ -8,7 +8,7 @@
 
 ## ✨ Fonctionnalités Principales
 
-### 🐳 Gestion Docker (Nouveau v0.2.0)
+### 🐳 Gestion Docker (Nouveau v2.0.0)
 - **Nœuds Docker :** Ajoutez des containers Docker à vos schémas réseau avec une icône dédiée (bleu Docker #2496ED)
 - **Import Automatique :** Importez automatiquement tous vos containers Docker existants en un clic
 - **Contrôle en Temps Réel :** Visualisez l'état des containers avec des indicateurs colorés :
@@ -95,7 +95,7 @@ Pour activer la gestion Docker, assurez-vous que Docker Engine est accessible :
 
 **Windows :**
 - Docker Desktop doit être installé et en cours d'exécution
-- L'API Docker doit être exposée sur `tcp://localhost:2375`
+- L'application se connecte automatiquement via le named pipe `//./pipe/docker_engine` (sécurisé)
 
 **Test de connexion :**
 ```bash
@@ -215,13 +215,13 @@ Si vous voyez le message "Docker non disponible" :
 
 Créé avec ❤️ pour simplifier la vie des admins réseaux et DevOps.
 
-**Version : 0.2.0** - Docker Integration & Enhanced UI
+**Version : 2.0.0** - Docker Integration & Enhanced UI
 
 ---
 
 ## 🗺️ Roadmap
 
-### Version 0.3.0 (À venir)
+### Version 3.0.0 (À venir)
 - Monitoring en temps réel (CPU, RAM, Network)
 - Alertes et notifications
 - Support Kubernetes

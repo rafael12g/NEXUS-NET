@@ -8,8 +8,8 @@ class DockerService {
         
         try {
             if (isWindows) {
-                // Windows typically uses named pipe or TCP
-                this.docker = new Docker({ host: 'localhost', port: 2375 });
+                // Windows: use named pipe for security
+                this.docker = new Docker({ socketPath: '//./pipe/docker_engine' });
             } else {
                 // Linux/Mac uses Unix socket
                 this.docker = new Docker({ socketPath: '/var/run/docker.sock' });

@@ -20,6 +20,7 @@
             --accent-green: #4ade80;
             --accent-red: #f87171;
             --accent-orange: #fbbf24;
+            --docker-blue: #2496ED;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
         }
@@ -138,6 +139,7 @@
         }
         .item-btn i { font-size: 18px; margin-bottom: 4px; }
         .item-btn span { font-size: 9px; font-weight: 600; }
+        .docker-icon { color: var(--docker-blue) !important; }
         
         /* --- MINIMAP --- */
         #minimap {
@@ -271,7 +273,7 @@
             <div class="item-btn" onclick="addNode('firewall')"><i class="fas fa-shield-halved"></i><span>Firewall</span></div>
             <div class="item-btn" onclick="addNode('cloud')"><i class="fas fa-cloud"></i><span>Internet</span></div>
             <div class="item-btn" onclick="addNode('db')"><i class="fas fa-database"></i><span>Data</span></div>
-            <div class="item-btn" onclick="addNode('docker')"><i class="fab fa-docker" style="color:#2496ED;"></i><span>Docker</span></div>
+            <div class="item-btn" onclick="addNode('docker')"><i class="fab fa-docker docker-icon"></i><span>Docker</span></div>
         </div>
 
         <div class="category-header">Utilisateurs</div>
@@ -464,6 +466,23 @@
         let magnetMode = false;
         let linkMode = false;
         const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#06b6d4', '#38bdf8', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#ffffff', '#94a3b8', '#475569', '#0f172a'];
+        const DOCKER_BLUE = '#2496ED';
+        
+        // Helper function to escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Helper function to get status color
+        function getStatusColor(state) {
+            const stateLower = state.toLowerCase();
+            if(stateLower === 'running') return '#4ade80';
+            if(stateLower === 'paused' || stateLower === 'restarting') return '#fbbf24';
+            if(stateLower === 'stopped' || stateLower === 'exited') return '#f87171';
+            return '#94a3b8';
+        }
         
         const planId = "<%= plan.id %>";
         // Use a safe way to inject JSON
@@ -1107,8 +1126,8 @@
             const labelInput = document.getElementById('nodeLabel').value;
             const label = labelInput || (type === 'note' ? "Note" : type.charAt(0).toUpperCase() + type.slice(1));
             const ip = document.getElementById('nodeIP').value;
-            // Use Docker blue (#2496ED) for docker type, otherwise use selected color
-            const color = type === 'docker' ? '#2496ED' : document.getElementById('nodeColor').value;
+            // Use Docker blue for docker type, otherwise use selected color
+            const color = type === 'docker' ? DOCKER_BLUE : document.getElementById('nodeColor').value;
 
             let node = {
                 id: Date.now(),
@@ -1401,20 +1420,36 @@
                 content.style.cssText = 'background:var(--panel-bg); padding:30px; border-radius:12px; max-width:600px; max-height:80vh; overflow-y:auto; border:1px solid var(--border-color);';
                 
                 let html = '<h2 style="margin-top:0; color:var(--text-primary);">Importer des Containers Docker</h2>';
-                html += '<div style="display:flex; flex-direction:column; gap:10px;">';
-                
-                containers.forEach(c => {
-                    const statusColor = c.state === 'running' ? '#4ade80' : (c.state === 'paused' ? '#fbbf24' : '#f87171');
-                    html += `<div style="padding:12px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid ${statusColor}; cursor:pointer;" onclick="addDockerContainer('${c.id}', '${c.name}', '${c.state}')">`;
-                    html += `<div style="font-weight:600; color:var(--text-primary);">${c.name}</div>`;
-                    html += `<div style="font-size:11px; color:var(--text-secondary);">Image: ${c.image} | État: ${c.state}</div>`;
-                    html += '</div>';
-                });
-                
-                html += '</div>';
+                html += '<div id="docker-container-list" style="display:flex; flex-direction:column; gap:10px;"></div>';
                 html += '<button class="btn-ghost" onclick="this.parentElement.parentElement.remove()" style="margin-top:20px; width:100%;">Fermer</button>';
                 
                 content.innerHTML = html;
+                
+                // Safely add containers with proper event handling (no XSS)
+                const containerList = content.querySelector('#docker-container-list');
+                containers.forEach(c => {
+                    const statusColor = getStatusColor(c.state);
+                    const containerDiv = document.createElement('div');
+                    containerDiv.style.cssText = `padding:12px; background:rgba(0,0,0,0.3); border-radius:6px; border-left:3px solid ${statusColor}; cursor:pointer;`;
+                    
+                    const nameDiv = document.createElement('div');
+                    nameDiv.style.cssText = 'font-weight:600; color:var(--text-primary);';
+                    nameDiv.textContent = c.name;
+                    
+                    const infoDiv = document.createElement('div');
+                    infoDiv.style.cssText = 'font-size:11px; color:var(--text-secondary);';
+                    infoDiv.textContent = `Image: ${c.image} | État: ${c.state}`;
+                    
+                    containerDiv.appendChild(nameDiv);
+                    containerDiv.appendChild(infoDiv);
+                    
+                    // Use event listener instead of inline onclick
+                    containerDiv.addEventListener('click', () => {
+                        addDockerContainer(c.id, c.name, c.state);
+                    });
+                    
+                    containerList.appendChild(containerDiv);
+                });
                 modal.appendChild(content);
                 document.body.appendChild(modal);
                 
@@ -1425,10 +1460,10 @@
         }
         
         function addDockerContainer(dockerId, containerName, state) {
-            const color = '#2496ED';
+            const color = DOCKER_BLUE;
             const node = {
                 id: Date.now(),
-                label: `\n<b>${containerName}</b>\n${state}`,
+                label: `\n<b>${escapeHtml(containerName)}</b>\n${escapeHtml(state)}`,
                 _data: { 
                     name: containerName, 
                     ip: '', 
@@ -1593,7 +1628,7 @@
                     const item = document.createElement('div');
                     item.className = 'legend-item';
                     
-                    const color = type === 'docker' ? '#2496ED' : '#38bdf8';
+                    const color = type === 'docker' ? DOCKER_BLUE : '#38bdf8';
                     item.innerHTML = `<i class="${def.fa}" style="color:${color};"></i><span>${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
                     legendContent.appendChild(item);
                 }
