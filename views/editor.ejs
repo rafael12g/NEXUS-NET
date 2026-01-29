@@ -415,6 +415,10 @@
         </button>
     </div>
 
+    <script id="plan-data-json" type="application/json">
+        <%- plan.data ? JSON.stringify(plan.data) : 'null' %>
+    </script>
+
     <script>
         // CONFIG
         const icons = {
@@ -460,7 +464,15 @@
         
         const planId = "<%= plan.id %>";
         // Use a safe way to inject JSON
-        const rawPlanData = <%- plan.data ? JSON.stringify(plan.data) : 'null' %>;
+        let rawPlanData = null;
+        try {
+            const rawEl = document.getElementById('plan-data-json');
+            if(rawEl && rawEl.textContent.trim() !== 'null') {
+                rawPlanData = JSON.parse(rawEl.textContent);
+            }
+        } catch(e) {
+            console.error("Failed to parse plan data plan", e);
+        }
 
         window.onload = function() {
             try {
