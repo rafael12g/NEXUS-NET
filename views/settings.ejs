@@ -32,6 +32,11 @@
                     <%= success %>
                 </div>
             <% } %>
+            <% if (forcePasswordChange) { %>
+                <div style="color: #fbbf24; background: rgba(251, 191, 36, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+                    Pour des raisons de sécurité, veuillez changer votre mot de passe.
+                </div>
+            <% } %>
 
             <form action="/settings/update" method="POST">
                 <div class="category-header" style="margin-bottom: 15px; color: var(--accent-blue);">Profil</div>

@@ -1,23 +1,23 @@
 # 🌐 Nexus NET - Universal Network Architect
 
-**En Dévelopement**
-
-**Nexus NET** est un outil de cartographie réseau et de gestion d'infrastructure conçu pour les administrateurs systèmes, les architectes réseaux et les DevOps. Il offre une interface moderne, sombre ("Cyberpunk/Dark Mode") et fluide pour concevoir des topologies complexes et gérer des containers Docker directement dans le navigateur.
+**Nexus NET** est un outil de cartographie réseau et de gestion d'infrastructure pour admins systèmes, architectes réseaux et DevOps. L’interface est moderne, sombre et pensée pour concevoir des topologies complexes et piloter Docker depuis le navigateur.
 
 ---
 
 ## ✨ Fonctionnalités Principales
 
 ### 🐳 Gestion Docker
-- **Nœuds Docker :** Ajoutez des containers Docker à vos schémas réseau avec une icône dédiée (bleu Docker #2496ED)
-- **Import Automatique :** Importez automatiquement tous vos containers Docker existants en un clic
-- **Contrôle en Temps Réel :** Visualisez l'état des containers avec des indicateurs colorés :
-  - 🟢 Vert = Running
-  - 🔴 Rouge = Stopped/Exited
-  - 🟡 Jaune = Paused/Restarting
-  - ⚪ Gris = Non connecté
-- **Actions Directes :** Démarrez, arrêtez ou redémarrez vos containers depuis l'inspecteur
-- **API REST :** Communication avec Docker Engine via `dockerode`
+- **Nœuds Docker :** Ajoutez des containers Docker à vos schémas réseau (icône Docker)
+- **Importer Sélectif :** Choisissez les containers à ajouter depuis une liste
+- **Générer Schéma :** Ajoute tous les containers et crée un schéma automatique
+- **Contrôle en Temps Réel :** Statut coloré :
+  - 🟢 Running
+  - 🔴 Stopped/Exited
+  - 🟡 Paused/Restarting
+  - ⚪ Non connecté
+- **Actions Directes :** Start/Stop/Restart via l’inspecteur
+- **Monitoring par container :** CPU/RAM affichés sur les nœuds Docker
+- **API REST :** Docker Engine via `dockerode`
 
 ### 🗺️ Interface Améliorée (Style Draw.io)
 - **Minimap :** Vue d'ensemble du réseau en bas à droite avec navigation rapide
@@ -33,7 +33,8 @@
 
 ### 🎨 Design & Ergonomie
 - **Interface Dark Mode :** Design professionnel optimisé pour réduire la fatigue oculaire
-- **Moteur Physique :** Les nœuds s'organisent automatiquement (physique des particules) avec possibilité de figer la vue
+- **Personnalisation :** Couleur d’accent modifiable dans Paramètres
+- **Moteur Physique :** Les nœuds s'organisent automatiquement avec possibilité de figer la vue
 - **Grille Magnétique :** Alignement automatique des équipements pour des schémas ultra-propres
 - **Outils d'Alignement :** Boutons pour aligner verticalement ou horizontalement une sélection d'appareils
 
@@ -58,8 +59,8 @@
 ## 🚀 Installation
 
 ### Prérequis
-- Node.js 16+ 
-- npm ou yarn
+- Node.js 18+
+- npm
 - Docker (optionnel, pour la gestion des containers)
 - Base de données MySQL
 
@@ -91,15 +92,7 @@ SESSION_SECRET=votre_secret_securise
 
 ### Base de Données
 
-1. Assurez-vous d'avoir un serveur MySQL qui tourne (via XAMPP, WAMP ou MySQL Server).
-2. Créez la base de données et les tables :
-
-```bash
-# Si vous avez mysql en ligne de commande :
-mysql -u root -p < schema.sql
-
-# Sinon, importez le contenu de schema.sql via phpMyAdmin
-```
+La base est initialisée automatiquement depuis `schema.sql` au premier démarrage. Si besoin, vous pouvez toujours importer manuellement ce fichier.
 
 ### Lancement
 
@@ -124,15 +117,14 @@ Pour activer la gestion Docker, assurez-vous que Docker Engine est accessible :
 - Docker Desktop doit être installé et en cours d'exécution
 - L'application se connecte automatiquement via le named pipe `//./pipe/docker_engine` (sécurisé)
 
-**Test de connexion :**
-```bash
-# Vérifier que Docker est accessible
-docker ps
+**Test de connexion :** vérifiez que Docker répond via `docker ps`.
 
-# Si vous obtenez une erreur de permission sur Linux
-sudo usermod -aG docker $USER
-# Puis redémarrez votre session
-```
+### Docker Compose (recommandé)
+
+Utilisez `docker-compose.yml` (DB auto-initialisée + app) :
+- DB exposée en local sur `127.0.0.1:3306`
+- limites CPU/RAM + rotation des logs
+- variables d’env (DB_*, COOKIE_SECURE, TRUST_PROXY)
 
 ---
 
@@ -142,10 +134,10 @@ sudo usermod -aG docker $USER
 Utilisez le panneau de gauche. Entrez un **Nom**, une **IP** (optionnel), choisissez un **Type** et cliquez sur le bouton correspondant.
 
 ### 2. Importer des Containers Docker
-1. Cliquez sur le bouton **"Importer depuis Docker"** dans la section Docker
-2. Une fenêtre s'ouvre avec la liste de tous vos containers
+1. Cliquez sur **"Importer Sélectif"** dans la section Docker
+2. Une fenêtre s'ouvre avec la liste des containers
 3. Cliquez sur un container pour l'ajouter au schéma
-4. L'état du container est automatiquement synchronisé
+4. L'état et les stats sont synchronisés
 
 ### 3. Gérer les Containers Docker
 1. Cliquez sur un nœud Docker dans le schéma
@@ -214,6 +206,7 @@ L'application expose une API REST pour interagir avec Docker :
 ```
 GET  /api/docker/containers           - Liste tous les containers
 GET  /api/docker/containers/:id/status - État d'un container
+GET  /api/docker/containers/:id/stats  - CPU/RAM d'un container
 POST /api/docker/containers/:id/start  - Démarrer un container
 POST /api/docker/containers/:id/stop   - Arrêter un container
 POST /api/docker/containers/:id/restart - Redémarrer un container
@@ -249,9 +242,8 @@ Créé avec ❤️ pour simplifier la vie des admins réseaux et DevOps.
 ## 🗺️ Roadmap
 
 ### Version 3.0.0 (À venir)
-- Monitoring en temps réel (CPU, RAM, Network)
 - Alertes et notifications
 - Support Kubernetes
-- Thèmes personnalisables
+- Thèmes avancés (light/dark)
 - Mode collaboration multi-utilisateurs
 

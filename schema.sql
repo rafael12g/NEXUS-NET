@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     theme_color VARCHAR(7) DEFAULT '#38bdf8',
     theme_mode VARCHAR(10) DEFAULT 'dark',
+    force_password_change TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

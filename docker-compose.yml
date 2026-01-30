@@ -6,15 +6,17 @@ services:
     user: root
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - DB_HOST=db
-      - DB_USER=nexus
-      - DB_PASS=nexus_password
-      - DB_NAME=nexus_net
-      - DB_CONNECT_RETRY_MS=2000
-      - NODE_ENV=production
-      - TRUST_PROXY=1
-      - COOKIE_SECURE=false
+      - DB_HOST=${DB_HOST:-db}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - DB_CONNECT_RETRY_MS=${DB_CONNECT_RETRY_MS:-2000}
+      - NODE_ENV=${NODE_ENV:-production}
+      - TRUST_PROXY=${TRUST_PROXY:-1}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
@@ -36,11 +38,13 @@ services:
 
   db:
     image: mysql:8.0
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: nexus_net
-      MYSQL_USER: nexus
-      MYSQL_PASSWORD: nexus_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
@@ -59,6 +63,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  adminer:
+    image: adminer:4
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
 
 volumes:
   db_data:
