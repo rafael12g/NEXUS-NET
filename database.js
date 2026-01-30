@@ -6,9 +6,9 @@ require('dotenv').config();
 // Configuration pour XAMPP par défaut
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASS || '',
-    database: process.env.DB_NAME || 'nexus_net',
+    user: process.env.DB_USER || process.env.MYSQL_USER || 'root',
+    password: process.env.DB_PASS || process.env.MYSQL_PASSWORD || '',
+    database: process.env.DB_NAME || process.env.MYSQL_DATABASE || 'nexus_net',
     multipleStatements: true,
     waitForConnections: true,
     connectionLimit: 10,
