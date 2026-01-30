@@ -17,24 +17,39 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
-// Test connection and init DB
-pool.getConnection((err, connection) => {
-    if (err) {
-        if (err.code === 'ER_BAD_DB_ERROR') {
-            console.error('Erreur: La base de données "nexus_net" n\'existe pas.');
-            console.log('Veuillez créer la base de données "nexus_net" dans votre phpMyAdmin/MySQL.');
-        } else if (err.code === 'ECONNREFUSED') {
-            console.error('Erreur: Impossible de se connecter à la base de données (Connexion refusée).');
-            console.log('Vérifiez que MySQL est bien lancé dans XAMPP.');
-        } else {
-            console.error('Error connecting to MySQL database:', err);
+const retryDelay = Number(process.env.DB_CONNECT_RETRY_MS) || 2000;
+const maxRetries = Number(process.env.DB_CONNECT_MAX_RETRIES) || 0; // 0 = infinite
+let retryCount = 0;
+
+function connectWithRetry() {
+    pool.getConnection((err, connection) => {
+        if (err) {
+            const canRetry = maxRetries === 0 || retryCount < maxRetries;
+            retryCount += 1;
+
+            if (err.code === 'ER_BAD_DB_ERROR') {
+                console.error('Erreur: La base de données "nexus_net" n\'existe pas (encore).');
+            } else if (err.code === 'ECONNREFUSED') {
+                console.error('Erreur: Impossible de se connecter à la base de données (Connexion refusée).');
+            } else {
+                console.error('Error connecting to MySQL database:', err.message || err);
+            }
+
+            if (canRetry) {
+                console.log(`Nouvelle tentative de connexion dans ${retryDelay}ms...`);
+                setTimeout(connectWithRetry, retryDelay);
+            }
+            return;
         }
-    } else {
+
         console.log('Connected to the MySQL database.');
         initDb(connection);
         connection.release();
-    }
-});
+    });
+}
+
+// Test connection and init DB
+connectWithRetry();
 
 function initDb(connection) {
     const schemaPath = path.resolve(__dirname, 'schema.sql');
