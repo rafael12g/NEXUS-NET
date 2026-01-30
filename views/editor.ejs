@@ -461,6 +461,22 @@
             if(stateLower === 'stopped' || stateLower === 'exited') return '#f87171';
             return '#94a3b8';
         }
+
+        function formatDockerLabel(data) {
+            const name = escapeHtml(data.name || 'Container');
+            const fallbackState = data.dockerId ? 'unknown' : 'non lié';
+            const state = escapeHtml(data.dockerState || fallbackState);
+            const ip = data.ip ? `\n${escapeHtml(data.ip)}` : '';
+
+            let statsLine = '';
+            if (data.dockerStats && Number.isFinite(data.dockerStats.cpuPercent) && Number.isFinite(data.dockerStats.memPercent)) {
+                const cpu = Math.round(data.dockerStats.cpuPercent);
+                const mem = Math.round(data.dockerStats.memPercent);
+                statsLine = `\nCPU ${cpu}% • RAM ${mem}%`;
+            }
+
+            return `\n<b>${name}</b>${ip}\n${state}${statsLine}`;
+        }
         
         const planId = "<%= plan.id %>";
         // Use a safe way to inject JSON
@@ -1235,7 +1251,11 @@
                 updateObj.color = { background: hexToRgba(color, alpha), border: color };
                 updateObj.font = { ...node.font, size: size };
             } else {
-                updateObj.label = `\n<b>${name}</b>` + (ip ? `\n${ip}` : "");
+                if (d.type === 'docker') {
+                    updateObj.label = formatDockerLabel({ ...d, name, ip });
+                } else {
+                    updateObj.label = `\n<b>${name}</b>` + (ip ? `\n${ip}` : "");
+                }
                 if(node.shape === 'image') updateObj.size = size;
                 else updateObj.icon = { ...node.icon, color: hexToRgba(color, alpha), size: size };
             }
@@ -1440,7 +1460,7 @@
                     
                     const node = {
                         id: nodeId,
-                        label: `\n<b>${escapeHtml(c.name)}</b>\n${escapeHtml(state)}`,
+                        label: formatDockerLabel({ name: c.name, dockerState: state, ip: '' }),
                         x: x, 
                         y: y,
                         icon: { code: icons.docker.code, color: color, face: "'Font Awesome 6 Brands'" },
@@ -1547,7 +1567,7 @@
             const color = getStatusColor(state);
             const node = {
                 id: Date.now(),
-                label: `\n<b>${escapeHtml(containerName)}</b>\n${escapeHtml(state)}`,
+                label: formatDockerLabel({ name: containerName, dockerState: state, ip: '' }),
                 _data: { 
                     name: containerName, 
                     ip: '', 
@@ -1620,7 +1640,8 @@
                 const updateObj = { 
                     id: selectedNodeId, 
                     _data: {...d, color: newColor},
-                    icon: { ...node.icon, color: newColor }
+                    icon: { ...node.icon, color: newColor },
+                    label: formatDockerLabel({ ...d, color: newColor })
                 };
                 
                 nodes.update(updateObj);
@@ -1675,6 +1696,38 @@
                 console.error(err);
                 showToast('Erreur de connexion');
             }
+        }
+
+        async function refreshDockerStatsForNode(nodeId) {
+            const node = nodes.get(nodeId);
+            if (!node || !node._data || node._data.type !== 'docker' || !node._data.dockerId) return;
+
+            try {
+                const response = await fetch(`/api/docker/containers/${node._data.dockerId}/stats`);
+                const result = await response.json();
+                if (!result.success) return;
+
+                const d = node._data || {};
+                const dockerStats = result.stats || {};
+
+                const updateObj = {
+                    id: nodeId,
+                    _data: { ...d, dockerStats },
+                    label: formatDockerLabel({ ...d, dockerStats })
+                };
+
+                nodes.update(updateObj);
+            } catch (err) {
+                console.error('Docker stats error', err);
+            }
+        }
+
+        function refreshDockerStatsAll() {
+            nodes.get().forEach(n => {
+                if (n._data && n._data.type === 'docker' && n._data.dockerId) {
+                    refreshDockerStatsForNode(n.id);
+                }
+            });
         }
         
         // --- UI ENHANCEMENT FUNCTIONS ---
@@ -1849,6 +1902,9 @@
                 }
             }
         });
+
+        // Poll Docker stats for nodes every 4 seconds
+        setInterval(refreshDockerStatsAll, 4000);
     </script>
 </body>
 </html>

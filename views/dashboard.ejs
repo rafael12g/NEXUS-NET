@@ -55,43 +55,6 @@
             </form>
         </div>
 
-        <section class="monitoring-panel" aria-live="polite">
-            <div class="monitoring-header">
-                <div>
-                    <h3>Monitoring en temps réel</h3>
-                    <p>CPU, RAM et Wi-Fi</p>
-                </div>
-                <div class="monitoring-status" id="monitoring-status">Connexion...</div>
-            </div>
-
-            <div class="monitoring-grid">
-                <div class="monitoring-card">
-                    <div class="monitoring-label">CPU</div>
-                    <div class="monitoring-value"><span id="cpu-value">--</span>%</div>
-                    <div class="monitoring-bar">
-                        <div class="monitoring-bar-fill" id="cpu-bar"></div>
-                    </div>
-                </div>
-
-                <div class="monitoring-card">
-                    <div class="monitoring-label">RAM</div>
-                    <div class="monitoring-value"><span id="ram-value">--</span>%</div>
-                    <div class="monitoring-bar">
-                        <div class="monitoring-bar-fill" id="ram-bar"></div>
-                    </div>
-                </div>
-
-                <div class="monitoring-card">
-                    <div class="monitoring-label">Wi-Fi</div>
-                    <div class="monitoring-value"><span id="wifi-value">--</span>%</div>
-                    <div class="monitoring-sub" id="wifi-details">Rx -- kbps • Tx -- kbps</div>
-                    <div class="monitoring-bar">
-                        <div class="monitoring-bar-fill" id="wifi-bar"></div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <div class="plans-grid">
             <% if (plans.length === 0) { %>
                 <p style="color: var(--text-secondary);">Vous n'avez aucun plan pour le moment.</p>
@@ -106,62 +69,5 @@
             <% } %>
         </div>
     </div>
-
-    <script>
-        const statusEl = document.getElementById('monitoring-status');
-        const cpuValue = document.getElementById('cpu-value');
-        const ramValue = document.getElementById('ram-value');
-        const wifiValue = document.getElementById('wifi-value');
-        const wifiDetails = document.getElementById('wifi-details');
-        const cpuBar = document.getElementById('cpu-bar');
-        const ramBar = document.getElementById('ram-bar');
-        const wifiBar = document.getElementById('wifi-bar');
-
-        function formatPercent(value) {
-            if (value === null || value === undefined || Number.isNaN(value)) return '--';
-            return Math.round(value);
-        }
-
-        function setBar(barEl, value) {
-            if (!barEl) return;
-            const percent = value === null || value === undefined || Number.isNaN(value) ? 0 : Math.max(0, Math.min(100, value));
-            barEl.style.width = percent + '%';
-        }
-
-        async function fetchMonitoring() {
-            try {
-                const response = await fetch('/api/monitoring/stats');
-                const data = await response.json();
-
-                if (!data.success) {
-                    statusEl.textContent = 'Erreur';
-                    return;
-                }
-
-                statusEl.textContent = 'En direct';
-                cpuValue.textContent = formatPercent(data.cpuPercent);
-                ramValue.textContent = formatPercent(data.ramPercent);
-
-                setBar(cpuBar, data.cpuPercent);
-                setBar(ramBar, data.ramPercent);
-
-                if (data.wifi) {
-                    const wifiPercent = data.wifi.utilizationPercent;
-                    wifiValue.textContent = formatPercent(wifiPercent);
-                    wifiDetails.textContent = `Rx ${data.wifi.rxKbps ?? '--'} kbps • Tx ${data.wifi.txKbps ?? '--'} kbps`;
-                    setBar(wifiBar, wifiPercent ?? 0);
-                } else {
-                    wifiValue.textContent = '--';
-                    wifiDetails.textContent = 'Wi-Fi non disponible';
-                    setBar(wifiBar, 0);
-                }
-            } catch (error) {
-                statusEl.textContent = 'Hors ligne';
-            }
-        }
-
-        fetchMonitoring();
-        setInterval(fetchMonitoring, 2000);
-    </script>
 </body>
 </html>
