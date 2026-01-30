@@ -6,10 +6,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DB_HOST=
-      - DB_USER=
-      - DB_PASS=
-      - DB_NAME=
+      - DB_HOST=db
+      - DB_USER=nexus
+      - DB_PASS=nexus_password
+      - DB_NAME=nexus_net
+      - DB_CONNECT_RETRY_MS=2000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
@@ -25,7 +26,13 @@ services:
       MYSQL_PASSWORD: nexus_password
     volumes:
       - db_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   db_data:
