@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+yarn.lock
+.git
+.gitignore
+README.md
+README_INSTALL.md
+*.log
+.env

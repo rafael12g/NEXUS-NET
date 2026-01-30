@@ -6,6 +6,9 @@
     <title>Paramètres - Nexus Net</title>
     <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent-blue: <%= (theme && theme.accent) ? theme.accent : '#38bdf8' %>; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -39,6 +42,11 @@
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" value="<%= user.email %>">
+                </div>
+                <div class="category-header" style="margin: 20px 0 15px; color: var(--accent-blue);">Personnalisation</div>
+                <div class="form-group">
+                    <label for="themeColor">Couleur d'accent</label>
+                    <input type="color" id="themeColor" name="themeColor" value="<%= user.theme_color || '#38bdf8' %>" style="height: 45px; padding: 0;">
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Mettre à jour le profil</button>
             </form>

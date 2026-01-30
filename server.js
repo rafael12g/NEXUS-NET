@@ -4,6 +4,9 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const fs = require('fs');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const db = require('./database');
 const DockerService = require('./docker-service');
@@ -14,18 +17,59 @@ const PORT = process.env.PORT || 3000;
 const dockerService = new DockerService();
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.disable('x-powered-by');
+if (process.env.TRUST_PROXY === '1') {
+    app.set('trust proxy', 1);
+}
+
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
+}));
+app.use(compression());
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 app.set('views', [path.join(__dirname, 'views'), __dirname]);
 app.set('view engine', 'ejs');
 
 // Session setup
 app.use(session({
+    name: 'nexus.sid',
     secret: process.env.SESSION_SECRET || 'nexus-secret-key-change-this',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24
+    }
 }));
+
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    res.locals.theme = {
+        accent: (req.session.user && req.session.user.theme_color) || '#38bdf8'
+    };
+    next();
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+app.use('/api', apiLimiter);
 
 // Authentication Middleware
 const requireLogin = (req, res, next) => {
@@ -48,7 +92,7 @@ app.get('/login', (req, res) => {
     res.render('login', { error: null });
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', authLimiter, (req, res) => {
     const { username, password } = req.body;
     db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
         if (err) return res.render('login', { error: 'Database error' });
@@ -72,7 +116,7 @@ app.get('/register', (req, res) => {
     res.render('register', { error: null });
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', authLimiter, (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
     
     if (password !== confirmPassword) {
@@ -154,8 +198,9 @@ app.get('/settings', requireLogin, (req, res) => {
 });
 
 app.post('/settings/update', requireLogin, (req, res) => {
-    const { username, email } = req.body;
-    db.query('UPDATE users SET username = ?, email = ? WHERE id = ?', [username, email, req.session.userId], (err, result) => {
+    const { username, email, themeColor } = req.body;
+    const colorValue = /^#[0-9a-fA-F]{6}$/.test(themeColor || '') ? themeColor : '#38bdf8';
+    db.query('UPDATE users SET username = ?, email = ?, theme_color = ? WHERE id = ?', [username, email, colorValue, req.session.userId], (err, result) => {
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
                 return res.render('settings', { user: req.session.user, error: 'Ce nom d\'utilisateur est déjà pris', success: null });
@@ -165,6 +210,7 @@ app.post('/settings/update', requireLogin, (req, res) => {
         
         req.session.user.username = username;
         req.session.user.email = email;
+        req.session.user.theme_color = colorValue;
         
          db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
             res.render('settings', { user: results[0], error: null, success: 'Profil mis à jour avec succès' });

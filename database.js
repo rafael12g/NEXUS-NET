@@ -60,11 +60,43 @@ function initDb(connection) {
                 console.error('Error initializing database schema:', err);
             } else {
                 console.log('Database schema initialized from schema.sql.');
+                ensureUserColumns(connection);
             }
         });
     } catch (err) {
         console.error('Error reading schema.sql:', err);
     }
+}
+
+function ensureUserColumns(connection) {
+    const columns = {
+        theme_color: "ALTER TABLE users ADD COLUMN theme_color VARCHAR(7) DEFAULT '#38bdf8'",
+        theme_mode: "ALTER TABLE users ADD COLUMN theme_mode VARCHAR(10) DEFAULT 'dark'"
+    };
+
+    connection.query(
+        'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+        [dbConfig.database, 'users'],
+        (err, results) => {
+            if (err) {
+                console.error('Error checking user columns:', err.message || err);
+                return;
+            }
+
+            const existing = new Set(results.map((row) => row.COLUMN_NAME));
+            Object.entries(columns).forEach(([column, sql]) => {
+                if (!existing.has(column)) {
+                    connection.query(sql, (alterErr) => {
+                        if (alterErr) {
+                            console.error(`Error adding column ${column}:`, alterErr.message || alterErr);
+                        } else {
+                            console.log(`Added column ${column} to users table.`);
+                        }
+                    });
+                }
+            });
+        }
+    );
 }
 
 module.exports = pool;
