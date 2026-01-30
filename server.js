@@ -297,6 +297,15 @@ app.get('/api/docker/containers/:id/status', requireLogin, async (req, res) => {
     res.json(result);
 });
 
+// GET /api/docker/containers/:id/stats - Stats d'un container spécifique
+app.get('/api/docker/containers/:id/stats', requireLogin, async (req, res) => {
+    if (!isValidContainerId(req.params.id)) {
+        return res.status(400).json({ success: false, error: 'Invalid container ID format' });
+    }
+    const result = await dockerService.getContainerStats(req.params.id);
+    res.json(result);
+});
+
 // POST /api/docker/containers/:id/start - Démarrer un container
 app.post('/api/docker/containers/:id/start', requireLogin, async (req, res) => {
     if (!isValidContainerId(req.params.id)) {

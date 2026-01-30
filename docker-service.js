@@ -162,6 +162,44 @@ class DockerService {
             return { success: false, error: error.message };
         }
     }
+
+    async getContainerStats(id) {
+        if (!await this.isAvailable()) {
+            return { success: false, error: 'Docker not available' };
+        }
+
+        try {
+            const container = this.docker.getContainer(id);
+            const stats = await container.stats({ stream: false });
+
+            const cpuStats = stats.cpu_stats || {};
+            const precpuStats = stats.precpu_stats || {};
+            const cpuDelta = (cpuStats.cpu_usage?.total_usage || 0) - (precpuStats.cpu_usage?.total_usage || 0);
+            const systemDelta = (cpuStats.system_cpu_usage || 0) - (precpuStats.system_cpu_usage || 0);
+            const cpuCount = cpuStats.online_cpus || (cpuStats.cpu_usage?.percpu_usage ? cpuStats.cpu_usage.percpu_usage.length : 1);
+
+            let cpuPercent = 0;
+            if (systemDelta > 0 && cpuDelta > 0) {
+                cpuPercent = (cpuDelta / systemDelta) * cpuCount * 100;
+            }
+
+            const memUsage = stats.memory_stats?.usage || 0;
+            const memLimit = stats.memory_stats?.limit || 0;
+            const memPercent = memLimit > 0 ? (memUsage / memLimit) * 100 : 0;
+
+            return {
+                success: true,
+                stats: {
+                    cpuPercent,
+                    memPercent,
+                    memUsageMB: memUsage / (1024 * 1024),
+                    memLimitMB: memLimit / (1024 * 1024)
+                }
+            };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 module.exports = DockerService;
