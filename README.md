@@ -1,6 +1,6 @@
 # 🌐 Nexus NET - Universal Network Architect
 
-**Version 2.0.0** - Docker Integration & Enhanced UI
+**En Dévelopement**
 
 **Nexus NET** est un outil de cartographie réseau et de gestion d'infrastructure conçu pour les administrateurs systèmes, les architectes réseaux et les DevOps. Il offre une interface moderne, sombre ("Cyberpunk/Dark Mode") et fluide pour concevoir des topologies complexes et gérer des containers Docker directement dans le navigateur.
 
@@ -8,7 +8,7 @@
 
 ## ✨ Fonctionnalités Principales
 
-### 🐳 Gestion Docker (Nouveau v2.0.0)
+### 🐳 Gestion Docker
 - **Nœuds Docker :** Ajoutez des containers Docker à vos schémas réseau avec une icône dédiée (bleu Docker #2496ED)
 - **Import Automatique :** Importez automatiquement tous vos containers Docker existants en un clic
 - **Contrôle en Temps Réel :** Visualisez l'état des containers avec des indicateurs colorés :
@@ -72,16 +72,43 @@ cd NEXUS-NET
 # Installer les dépendances
 npm install
 
-# Configurer l'environnement
-cp .env.example .env
-# Éditer .env avec vos paramètres de base de données
+# Configurer l'environnement (Créer un fichier .env)
+# Voir la section Configuration ci-dessous pour le contenu
+```
 
-# Initialiser la base de données
+### Configuration (.env)
+
+Créez un fichier `.env` à la racine du projet avec vos paramètres de base de données :
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=
+DB_NAME=nexus_net
+PORT=3000
+SESSION_SECRET=votre_secret_securise
+```
+
+### Base de Données
+
+1. Assurez-vous d'avoir un serveur MySQL qui tourne (via XAMPP, WAMP ou MySQL Server).
+2. Créez la base de données et les tables :
+
+```bash
+# Si vous avez mysql en ligne de commande :
 mysql -u root -p < schema.sql
 
+# Sinon, importez le contenu de schema.sql via phpMyAdmin
+```
+
+### Lancement
+
+```bash
 # Lancer le serveur
 npm start
 ```
+
+Ou sur Windows, double-cliquez simplement sur le fichier `start.bat`.
 
 Le serveur démarre sur `http://localhost:3000`
 
