@@ -80,6 +80,16 @@ const requireLogin = (req, res, next) => {
     }
 };
 
+const requirePasswordChange = (req, res, next) => {
+    const needsChange = req.session.user && req.session.user.force_password_change;
+    if (!needsChange) return next();
+
+    const allowedPaths = ['/settings', '/settings/password', '/logout'];
+    if (allowedPaths.includes(req.path)) return next();
+
+    res.redirect('/settings?forcePasswordChange=1');
+};
+
 // Routes
 
 // Landing Page
@@ -103,6 +113,9 @@ app.post('/login', authLimiter, (req, res) => {
             if (result) {
                 req.session.userId = user.id;
                 req.session.user = user;
+                if (user.force_password_change) {
+                    return res.redirect('/settings?forcePasswordChange=1');
+                }
                 res.redirect('/dashboard');
             } else {
                 res.render('login', { error: 'Invalid password' });
@@ -126,7 +139,7 @@ app.post('/register', authLimiter, (req, res) => {
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.render('register', { error: 'Error hashing password' });
         
-        db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, hash], (err, result) => {
+        db.query('INSERT INTO users (username, email, password, force_password_change) VALUES (?, ?, ?, ?)', [username, email, hash, 1], (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
                     return res.render('register', { error: 'Username already exists' });
@@ -145,7 +158,7 @@ app.get('/logout', (req, res) => {
 });
 
 // Dashboard
-app.get('/dashboard', requireLogin, (req, res) => {
+app.get('/dashboard', requireLogin, requirePasswordChange, (req, res) => {
     db.query('SELECT * FROM plans WHERE user_id = ? ORDER BY created_at DESC', [req.session.userId], (err, plans) => {
         if (err) return res.status(500).send('Database error');
         res.render('dashboard', { user: req.session.user, plans: plans });
@@ -153,7 +166,7 @@ app.get('/dashboard', requireLogin, (req, res) => {
 });
 
 // Create New Plan
-app.post('/plans/create', requireLogin, (req, res) => {
+app.post('/plans/create', requireLogin, requirePasswordChange, (req, res) => {
     const { name } = req.body;
     const defaultData = JSON.stringify({ nodes: [], edges: [] }); // Empty graph
     
@@ -164,7 +177,7 @@ app.post('/plans/create', requireLogin, (req, res) => {
 });
 
 // Editor
-app.get('/editor/:id', requireLogin, (req, res) => {
+app.get('/editor/:id', requireLogin, requirePasswordChange, (req, res) => {
     const planId = req.params.id;
     db.query('SELECT * FROM plans WHERE id = ? AND user_id = ?', [planId, req.session.userId], (err, results) => {
         if (err) return res.status(500).send('Database error');
@@ -176,7 +189,7 @@ app.get('/editor/:id', requireLogin, (req, res) => {
 });
 
 // API: Save Plan
-app.post('/api/save/:id', requireLogin, (req, res) => {
+app.post('/api/save/:id', requireLogin, requirePasswordChange, (req, res) => {
     const planId = req.params.id;
     const { data } = req.body; // Expecting JSON string or object
     
@@ -193,7 +206,8 @@ app.post('/api/save/:id', requireLogin, (req, res) => {
 app.get('/settings', requireLogin, (req, res) => {
     db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
         if (err || !results[0]) return res.redirect('/dashboard');
-        res.render('settings', { user: results[0], error: null, success: null });
+        const forcePasswordChange = req.query.forcePasswordChange === '1';
+        res.render('settings', { user: results[0], error: null, success: null, forcePasswordChange });
     });
 });
 
@@ -226,12 +240,13 @@ app.post('/settings/password', requireLogin, (req, res) => {
         bcrypt.compare(currentPassword, user.password, (err, result) => {
             if (result) {
                 bcrypt.hash(newPassword, 10, (err, hash) => {
-                    db.query('UPDATE users SET password = ? WHERE id = ?', [hash, req.session.userId], (err, result) => {
-                        res.render('settings', { user: user, error: null, success: 'Mot de passe modifié avec succès' });
+                    db.query('UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?', [hash, req.session.userId], (err, result) => {
+                        req.session.user.force_password_change = 0;
+                        res.render('settings', { user: user, error: null, success: 'Mot de passe modifié avec succès', forcePasswordChange: false });
                     });
                 });
             } else {
-                res.render('settings', { user: user, error: 'Mot de passe actuel incorrect', success: null });
+                res.render('settings', { user: user, error: 'Mot de passe actuel incorrect', success: null, forcePasswordChange: req.query.forcePasswordChange === '1' });
             }
         });
     });

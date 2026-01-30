@@ -71,7 +71,8 @@ function initDb(connection) {
 function ensureUserColumns(connection) {
     const columns = {
         theme_color: "ALTER TABLE users ADD COLUMN theme_color VARCHAR(7) DEFAULT '#38bdf8'",
-        theme_mode: "ALTER TABLE users ADD COLUMN theme_mode VARCHAR(10) DEFAULT 'dark'"
+        theme_mode: "ALTER TABLE users ADD COLUMN theme_mode VARCHAR(10) DEFAULT 'dark'",
+        force_password_change: "ALTER TABLE users ADD COLUMN force_password_change TINYINT(1) NOT NULL DEFAULT 1"
     };
 
     connection.query(
