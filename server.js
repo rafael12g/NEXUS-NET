@@ -7,6 +7,7 @@ const fs = require('fs');
 require('dotenv').config();
 const db = require('./database');
 const DockerService = require('./docker-service');
+const si = require('systeminformation');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -211,6 +212,67 @@ app.post('/report-bug', requireLogin, (req, res) => {
     fs.appendFile(path.join(__dirname, 'bug_reports.log'), report, (err) => {
         res.render('report-bug', { success: 'Rapport envoyé avec succès. Merci !', user: req.session.user });
     });
+});
+
+// Monitoring API
+function pickWifiInterface(interfaces) {
+    if (!Array.isArray(interfaces)) return null;
+    const preferred = interfaces.find((iface) => iface.operstate === 'up' && iface.type === 'wireless');
+    if (preferred) return preferred;
+    const byName = interfaces.find((iface) => iface.operstate === 'up' && /wi-?fi|wlan|wireless/i.test(iface.iface || iface.ifaceName || ''));
+    if (byName) return byName;
+    return interfaces.find((iface) => iface.type === 'wireless') || null;
+}
+
+function clampPercent(value) {
+    if (!Number.isFinite(value)) return null;
+    return Math.max(0, Math.min(100, value));
+}
+
+app.get('/api/monitoring/stats', requireLogin, async (req, res) => {
+    try {
+        const [load, mem, interfaces] = await Promise.all([
+            si.currentLoad(),
+            si.mem(),
+            si.networkInterfaces()
+        ]);
+
+        const cpuPercent = clampPercent(load.currentLoad);
+        const ramPercent = clampPercent((mem.used / mem.total) * 100);
+
+        const wifiInterface = pickWifiInterface(interfaces);
+        let wifi = null;
+
+        if (wifiInterface && (wifiInterface.iface || wifiInterface.ifaceName)) {
+            const ifaceName = wifiInterface.iface || wifiInterface.ifaceName;
+            const statsList = await si.networkStats(ifaceName);
+            const stats = Array.isArray(statsList) ? statsList[0] : null;
+            const speedMbps = Number(wifiInterface.speed) || 0;
+            let utilizationPercent = null;
+
+            if (stats && speedMbps > 0) {
+                const totalBitsPerSec = (Number(stats.rx_sec || 0) + Number(stats.tx_sec || 0)) * 8;
+                const maxBitsPerSec = speedMbps * 1_000_000;
+                utilizationPercent = clampPercent((totalBitsPerSec / maxBitsPerSec) * 100);
+            }
+
+            wifi = {
+                iface: ifaceName,
+                rxKbps: stats ? Math.round((Number(stats.rx_sec || 0) * 8) / 1000) : null,
+                txKbps: stats ? Math.round((Number(stats.tx_sec || 0) * 8) / 1000) : null,
+                utilizationPercent
+            };
+        }
+
+        res.json({
+            success: true,
+            cpuPercent,
+            ramPercent,
+            wifi
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // Docker API Routes

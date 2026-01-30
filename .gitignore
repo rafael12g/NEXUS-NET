@@ -35,3 +35,5 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+nexus-net.db
+nexus.db
