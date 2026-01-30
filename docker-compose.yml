@@ -67,7 +67,7 @@ services:
   adminer:
     image: adminer:4
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:6767:6767"
     depends_on:
       - db
     restart: unless-stopped
