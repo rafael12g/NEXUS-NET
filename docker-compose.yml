@@ -11,11 +11,26 @@ services:
       - DB_PASS=nexus_password
       - DB_NAME=nexus_net
       - DB_CONNECT_RETRY_MS=2000
+      - NODE_ENV=production
+      - TRUST_PROXY=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - db
-    restart: always
+    restart: unless-stopped
+    init: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    mem_limit: 512m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: mysql:8.0
@@ -24,15 +39,24 @@ services:
       MYSQL_DATABASE: nexus_net
       MYSQL_USER: nexus
       MYSQL_PASSWORD: nexus_password
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 5s
       retries: 10
+    mem_limit: 1g
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   db_data:
