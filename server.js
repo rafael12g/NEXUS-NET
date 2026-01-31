@@ -4,13 +4,43 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
 const db = require('./database');
 const DockerService = require('./docker-service');
 const si = require('systeminformation');
+
+function ensureEnvFile() {
+    const envPath = path.join(__dirname, '.env');
+    if (fs.existsSync(envPath)) return;
+
+    const examplePath = path.join(__dirname, '.env.example');
+    let content = '';
+
+    try {
+        if (fs.existsSync(examplePath)) {
+            content = fs.readFileSync(examplePath, 'utf8');
+        } else {
+            content = `PORT=3000\nNODE_ENV=production\nTRUST_PROXY=1\nCOOKIE_SECURE=false\nSESSION_SECRET=change_this_secret\n\nDB_HOST=db\nDB_NAME=nexus_net\nDB_USER=nexus\nDB_PASS=change_this_password\nMYSQL_ROOT_PASSWORD=change_root_password\nDB_CONNECT_RETRY_MS=2000\n`;
+        }
+
+        const random = () => crypto.randomBytes(24).toString('hex');
+        content = content
+            .replace(/change_this_secret/g, random())
+            .replace(/change_this_password/g, random())
+            .replace(/change_root_password/g, random());
+
+        fs.writeFileSync(envPath, content, { encoding: 'utf8', flag: 'wx' });
+        console.log('Created .env from template.');
+    } catch (error) {
+        console.warn('Unable to create .env automatically:', error.message || error);
+    }
+}
+
+ensureEnvFile();
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
