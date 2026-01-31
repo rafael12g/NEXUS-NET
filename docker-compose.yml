@@ -41,8 +41,6 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-nexus_net}
       MYSQL_USER: ${DB_USER:-nexus}
       MYSQL_PASSWORD: ${DB_PASS:-nexus_password}
-    ports:
-      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -59,14 +57,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  adminer:
-    image: adminer:4
-    ports:
-      - "127.0.0.1:8080:8080"
-    depends_on:
-      - db
-    restart: unless-stopped
 
 volumes:
   db_data:
