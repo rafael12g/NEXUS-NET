@@ -4,11 +4,21 @@ const path = require('path');
 require('dotenv').config();
 
 // Configuration pour XAMPP par défaut
+const dbHost = process.env.DB_HOST || 'localhost';
+let dbUser = process.env.DB_USER || process.env.MYSQL_APP_USER || process.env.MYSQL_USER || 'root';
+let dbPass = process.env.DB_PASS || process.env.MYSQL_APP_PASSWORD || process.env.MYSQL_PASSWORD || '';
+const dbName = process.env.DB_NAME || process.env.MYSQL_DATABASE || 'nexus_net';
+
+if (dbHost === 'db' && dbUser === 'root') {
+    dbUser = process.env.MYSQL_APP_USER || 'nexus';
+    dbPass = process.env.MYSQL_APP_PASSWORD || 'nexus_password';
+}
+
 const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || process.env.MYSQL_USER || 'root',
-    password: process.env.DB_PASS || process.env.MYSQL_PASSWORD || '',
-    database: process.env.DB_NAME || process.env.MYSQL_DATABASE || 'nexus_net',
+    host: dbHost,
+    user: dbUser,
+    password: dbPass,
+    database: dbName,
     multipleStatements: true,
     waitForConnections: true,
     connectionLimit: 10,
