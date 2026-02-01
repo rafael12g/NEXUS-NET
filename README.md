@@ -1,4 +1,4 @@
-# 🌐 Nexus NET - Universal Network Architect
+# 🌐 Nexus NET - IN DEV
 
 **Nexus NET** is a network mapping and infrastructure management tool for sysadmins, network architects, and DevOps. The interface is modern, dark, and designed to build complex topologies and control Docker from the browser.
 
@@ -248,4 +248,5 @@ Made with ❤️ to simplify the life of network admins and DevOps.
 - Kubernetes support
 - Advanced themes (light/dark)
 - Multi‑user collaboration mode
+
 
