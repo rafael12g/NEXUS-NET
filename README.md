@@ -58,15 +58,8 @@
 
 ---
 
-## 🚀 Installation
-
-### Prerequisites
-- Node.js 18+
-- npm
-- Docker (optional, for container management)
-- MySQL database
-
 ### Install
+>**Check the wiki for more info**.
 ```bash
 # Clone the repo
 git clone https://github.com/rafael12g/NEXUS-NET.git
@@ -78,94 +71,6 @@ npm install
 # Configure environment (create a .env file)
 # See Configuration below
 ```
-
-### Configuration (.env)
-
-Create a `.env` file at the project root with your database settings:
-
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASS=
-DB_NAME=nexus_net
-PORT=3000
-SESSION_SECRET=your_secure_secret
-```
-
-### Database
-
-The database is initialized automatically from `schema.sql` on first start. You can also import it manually if needed.
-
-### Run
-
-```bash
-# Start the server
-npm start
-```
-
-Or on Windows, simply double‑click `start.bat`.
-
-The server starts at `http://localhost:3000`.
-
-### Docker Configuration (Optional)
-
-To enable Docker management, ensure Docker Engine is accessible:
-
-**Linux/Mac:**
-- The Unix socket `/var/run/docker.sock` must be accessible
-- The Node.js user must have Docker permissions
-
-**Windows:**
-- Docker Desktop must be installed and running
-- The app connects automatically via the named pipe `//./pipe/docker_engine` (secure)
-
-**Connection test:** verify Docker responds with `docker ps`.
-
-### Docker Compose (recommended)
-
-Use `docker-compose.yml` (DB auto‑initialized + app):
-- DB exposed locally on `127.0.0.1:3306`
-- CPU/RAM limits + log rotation
-- env vars (DB_*, COOKIE_SECURE, TRUST_PROXY)
-
----
-
-## 📖 Quick Start Guide
-
-### 1. Add Devices
-Use the left panel. Enter a **Name**, an **IP** (optional), choose a **Type**, then click the corresponding button.
-
-### 2. Import Docker Containers
-1. Click **"Selective Import"** in the Docker section
-2. A window opens with the container list
-3. Click a container to add it to the diagram
-4. Status and stats are synced
-
-### 3. Manage Docker Containers
-1. Click a Docker node in the diagram
-2. The inspector opens on the right with Docker controls
-3. Use Start/Stop/Restart to control the container
-4. Click "Refresh" to update status
-
-### 4. Connect Devices (2 Methods)
-* **Quick method (Lightning):** Hold `Ctrl` and click two devices to select them, then click the ⚡ button
-* **Manual method:** Select source and destination from dropdowns and click `CONNECT`
-
-### 5. Edit Properties
-Click any object (Server, PC, or Cable). The **Inspector** opens on the right.
-* Change IP, color, size
-* Adjust opacity to create background zones
-* Change cable style (solid vs dashed)
-
-### 6. Navigate Large Diagrams
-- **Minimap:** Use the bottom‑right minimap for quick navigation
-- **Zoom:** Use +/- buttons (top-right) or mouse wheel
-- **Fit to Screen:** Click the expand button to fit the diagram
-- **Key F:** Press `F` to center the view
-
-### 7. Manage Files
-* **Drag & drop:** Drop a saved `.json` file anywhere on the page to open it
-* **Draw.io:** Click the orange `Export to Draw.io` button, then open diagrams.net and choose the generated `.xml`
 
 ---
 
@@ -180,24 +85,6 @@ Click any object (Server, PC, or Cable). The **Inspector** opens on the right.
 | **Context menu** | **Right click** on a device |
 | **Zoom in/out** | Mouse wheel or +/- buttons |
 | **Pan** | Left click and drag on empty space |
-
----
-
-## 🛠️ Tech Stack
-
-### Backend
-- **Node.js** with Express
-- **MySQL** for data persistence
-- **Dockerode** for Docker integration
-- **bcrypt** for password security
-- **EJS** for template rendering
-
-### Frontend
-- **HTML5 / CSS3 / Vanilla JavaScript**
-- **Vis-Network:** Graph rendering + physics engine
-- **jsPDF:** PDF generation
-- **FontAwesome 6:** Vector icons (including fa-docker)
-- **Google Fonts:** Inter & JetBrains Mono
 
 ---
 
@@ -233,14 +120,6 @@ If you see "Docker unavailable":
 
 ---
 
-## 📝 Credits & License
-
-Made with ❤️ to simplify the life of network admins and DevOps.
-
-**Version: 2.0.0** - Docker Integration & Enhanced UI
-
----
-
 ## 🗺️ Roadmap
 
 ### Version 3.0.0 (Upcoming)
@@ -249,4 +128,8 @@ Made with ❤️ to simplify the life of network admins and DevOps.
 - Advanced themes (light/dark)
 - Multi‑user collaboration mode
 
+---
 
+## 📝 Credits & License
+
+Made with ❤️ to simplify the life of network admins and DevOps.
