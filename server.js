@@ -161,14 +161,14 @@ app.get('/register', (req, res) => {
 
 app.post('/register', authLimiter, (req, res) => {
     const { username, email, password, confirmPassword } = req.body;
-    
+
     if (password !== confirmPassword) {
         return res.render('register', { error: 'Les mots de passe ne correspondent pas' });
     }
 
     bcrypt.hash(password, 10, (err, hash) => {
         if (err) return res.render('register', { error: 'Error hashing password' });
-        
+
         db.query('INSERT INTO users (username, email, password, force_password_change) VALUES (?, ?, ?, ?)', [username, email, hash, 1], (err, result) => {
             if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -199,7 +199,7 @@ app.get('/dashboard', requireLogin, requirePasswordChange, (req, res) => {
 app.post('/plans/create', requireLogin, requirePasswordChange, (req, res) => {
     const { name } = req.body;
     const defaultData = JSON.stringify({ nodes: [], edges: [] }); // Empty graph
-    
+
     db.query('INSERT INTO plans (user_id, name, data) VALUES (?, ?, ?)', [req.session.userId, name, defaultData], (err, result) => {
         if (err) return res.status(500).send('Database error');
         res.redirect('/editor/' + result.insertId);
@@ -213,7 +213,7 @@ app.get('/editor/:id', requireLogin, requirePasswordChange, (req, res) => {
         if (err) return res.status(500).send('Database error');
         const plan = results[0];
         if (!plan) return res.status(404).send('Plan not found');
-        
+
         res.render('editor', { plan: plan });
     });
 });
@@ -222,7 +222,7 @@ app.get('/editor/:id', requireLogin, requirePasswordChange, (req, res) => {
 app.post('/api/save/:id', requireLogin, requirePasswordChange, (req, res) => {
     const planId = req.params.id;
     const { data } = req.body; // Expecting JSON string or object
-    
+
     // Ensure data is a string
     const dataString = typeof data === 'string' ? data : JSON.stringify(data);
 
@@ -251,12 +251,12 @@ app.post('/settings/update', requireLogin, (req, res) => {
             }
             return res.render('settings', { user: req.session.user, error: 'Erreur de base de données', success: null });
         }
-        
+
         req.session.user.username = username;
         req.session.user.email = email;
         req.session.user.theme_color = colorValue;
-        
-         db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+
+        db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
             res.render('settings', { user: results[0], error: null, success: 'Profil mis à jour avec succès' });
         });
     });
@@ -264,7 +264,7 @@ app.post('/settings/update', requireLogin, (req, res) => {
 
 app.post('/settings/password', requireLogin, (req, res) => {
     const { currentPassword, newPassword } = req.body;
-    
+
     db.query('SELECT * FROM users WHERE id = ?', [req.session.userId], (err, results) => {
         const user = results[0];
         bcrypt.compare(currentPassword, user.password, (err, result) => {
@@ -299,7 +299,7 @@ app.get('/report-bug', requireLogin, (req, res) => {
 app.post('/report-bug', requireLogin, (req, res) => {
     const { title, description } = req.body;
     const report = `[${new Date().toISOString()}] User: ${req.session.user.username} | Title: ${title} | Desc: ${description}\n`;
-    
+
     fs.appendFile(path.join(__dirname, 'bug_reports.log'), report, (err) => {
         res.render('report-bug', { success: 'Rapport envoyé avec succès. Merci !', user: req.session.user });
     });
