@@ -1,135 +1,92 @@
-# 🌐 Nexus NET - IN DEV
+# Nexus NET v3.0
 
-**Nexus NET** is a network mapping and infrastructure management tool for sysadmins, network architects, and DevOps. The interface is modern, dark, and designed to build complex topologies and control Docker from the browser.
+Outil de cartographie réseau avec éditeur visuel (vis-network), intégration Docker et monitoring système. Refonte complète de la v2 : architecture modulaire, sécurité renforcée, bugs corrigés.
 
-> **Status:** This project is **in development**.
+## Fonctionnalités
 
----
+- **Éditeur de plans réseau** : nœuds typés (serveur, routeur, switch, PC, cloud…), liaisons, alignement, grille magnétique, minimap, règles, légende, exports JSON / PDF / Draw.io
+- **Intégration Docker** : import des conteneurs en un clic, génération automatique de schéma, actions start/stop/restart, stats temps réel
+- **Monitoring** : CPU, RAM, disque, réseau de la machine hôte
+- **Multi-utilisateurs** : comptes avec sessions persistées en MySQL
+- **Bug reports** : formulaire intégré, stockage en base
 
-## ✨ Key Features
+## Installation
 
-### 🐳 Docker Management
-- **Docker nodes:** Add Docker containers to network diagrams (Docker icon)
-- **Selective import:** Choose which containers to add from a list
-- **Auto-generate diagram:** Adds all containers and creates a diagram automatically
-- **Real-time status:** Color-coded status:
-  - 🟢 Running
-  - 🔴 Stopped/Exited
-  - 🟡 Paused/Restarting
-  - ⚪ Not connected
-- **Direct actions:** Start/Stop/Restart via the inspector
-- **Per-container monitoring:** CPU/RAM displayed on Docker nodes
-- **REST API:** Docker Engine via `dockerode`
+### Prérequis
+- Node.js ≥ 18
+- MySQL ≥ 8 (ou MariaDB ≥ 10.6)
+- Docker (optionnel, pour l'intégration conteneurs)
 
-### 🗺️ Enhanced Interface (Draw.io style)
-- **Minimap:** Overview of the network at bottom-right with quick navigation
-- **Dynamic legend:** Collapsible panel showing all equipment types in the diagram
-- **Live stats:**
-  - Total nodes
-  - Total connections
-  - Docker containers state (Running/Stopped)
-- **Improved navigation:**
-  - Clear +/- zoom buttons
-  - "Fit to Screen" button
-  - Keyboard shortcut `F` to center the view
+### En local
 
-### 🎨 Design & UX
-- **Dark mode UI:** Professional design to reduce eye strain
-- **Customization:** Accent color can be changed in Settings
-- **Physics engine:** Nodes auto-organize with optional freeze
-- **Magnetic grid:** Auto-align equipment for clean diagrams
-- **Alignment tools:** Buttons to align a selection vertically or horizontally
-
-### 🛠️ Create & Edit
-- **Full library:** Servers, Routers, Switches, Firewalls, Cloud, PCs, Printers, Docker Containers, etc.
-- **Custom images:** Import your own logos or images
-- **Zones & notes:** Create colored zones with **transparency (opacity)** for VLANs or rooms (DMZ, Prod, etc.)
-- **Advanced cabling:**
-  - RJ45 (solid)
-  - Fiber (colored)
-  - Wi‑Fi / Virtual (dashed)
-  - Edit links *after* creation (color/width changes)
-
-### 💾 Save & Export
-- **Auto-save:** Changes are saved automatically on the server
-- **JSON export:** Full project backup to transfer
-- **Draw.io (XML) export:** Generates a file compatible with [diagrams.net](https://app.diagrams.net/)
-- **PDF & PNG export:** High-definition report generation
-
----
-
-### Install
->**Check the wiki for more info**.
 ```bash
-# Clone the repo
-git clone https://github.com/rafael12g/NEXUS-NET.git
-cd NEXUS-NET
-
-# Install dependencies
 npm install
-
-# Configure environment (create a .env file)
-# See Configuration below
+cp .env.example .env      # puis éditer les valeurs
+npm start                 # ou: npm run dev (avec --watch)
 ```
 
----
+Le schéma SQL (`schema.sql`) est appliqué automatiquement au démarrage. L'application écoute sur `http://localhost:3000` par défaut.
 
-## ⌨️ Keyboard & Mouse Shortcuts
+### Avec Docker Compose
 
-| Action | Shortcut / Gesture |
-| :--- | :--- |
-| **Multi‑select** | `Ctrl` + **Left Click** (or drag a selection box) |
-| **Delete** | `Delete` key |
-| **Close menu/inspector** | `Esc` key |
-| **Center view** | `F` key |
-| **Context menu** | **Right click** on a device |
-| **Zoom in/out** | Mouse wheel or +/- buttons |
-| **Pan** | Left click and drag on empty space |
-
----
-
-## 🔌 Docker API
-
-The app exposes a REST API to interact with Docker:
-
-```
-GET  /api/docker/containers            - List all containers
-GET  /api/docker/containers/:id/status  - Container status
-GET  /api/docker/containers/:id/stats   - Container CPU/RAM
-POST /api/docker/containers/:id/start   - Start a container
-POST /api/docker/containers/:id/stop    - Stop a container
-POST /api/docker/containers/:id/restart - Restart a container
-GET  /api/docker/networks               - List Docker networks
+```bash
+cp .env.example .env      # définir DB_PASSWORD, DB_ROOT_PASSWORD, SESSION_SECRET
+docker compose up -d --build
 ```
 
----
+> ⚠️ Le `docker-compose.yml` monte `/var/run/docker.sock` pour permettre la gestion des conteneurs depuis l'app. Cela donne à l'application un contrôle total sur le démon Docker de l'hôte. Retirez ce volume et mettez `DOCKER_ENABLED=false` si vous n'en avez pas besoin.
 
-## 🔧 Troubleshooting
+## Configuration (`.env`)
 
-### Docker unavailable
-If you see "Docker unavailable":
-1. Ensure Docker is installed and running: `docker ps`
-2. On Linux/Mac, check socket permissions: `ls -l /var/run/docker.sock`
-3. On Windows, make sure Docker Desktop is running
-4. Restart the NEXUS-NET server after fixing the issue
+| Variable | Défaut | Description |
+|---|---|---|
+| `PORT` | `3000` | Port HTTP |
+| `NODE_ENV` | `development` | `production` active cookies sécurisés + secret obligatoire |
+| `DB_HOST` / `DB_PORT` | `localhost` / `3306` | MySQL |
+| `DB_USER` / `DB_PASSWORD` | — | Identifiants MySQL |
+| `DB_NAME` | `nexus_net` | Base de données |
+| `SESSION_SECRET` | — | **Obligatoire en production** (≥ 32 caractères aléatoires) |
+| `DOCKER_ENABLED` | `true` | Active l'intégration Docker |
+| `DOCKER_SOCKET` | `/var/run/docker.sock` | Socket du démon |
+| `TRUST_PROXY` | `false` | Mettre `true` derrière un reverse proxy |
 
-### Database connection error
-1. Check your `.env` settings
-2. Ensure MySQL is running
-3. Verify the database was created with `schema.sql`
+Générer un secret : `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
 
----
+## Architecture
 
-## 🗺️ Roadmap
+```
+src/
+├── server.js          # Point d'entrée, store sessions, arrêt gracieux
+├── app.js             # Assemblage Express, Helmet/CSP, sessions, CSRF
+├── config/            # Lecture et validation de l'environnement
+├── db/                # Pool mysql2/promise, application du schéma, retry
+├── middleware/        # auth (requireLogin…), CSRF, validation d'entrées
+├── routes/            # auth, pages, api/ (plans, docker, monitoring)
+└── services/          # docker (dockerode + cache ping), monitoring
+public/
+├── css/               # style.css (global) + editor.css
+└── js/                # ui.js (navbar/confirmations) + editor.js (éditeur complet)
+views/                 # EJS (aucun JS inline — compatible CSP stricte)
+```
 
-### Version 3.0.0 (Upcoming)
-- Alerts and notifications
-- Kubernetes support
-- Advanced themes (light/dark)
-- Multi‑user collaboration mode
+## Principales différences v2 → v3
 
----
+**Sécurité**
+- Protection CSRF sur tous les formulaires et appels API (token de session)
+- CSP stricte sans `unsafe-inline` pour les scripts : tout le JS a été externalisé
+- `session.regenerate()` au login (anti-fixation), messages d'erreur génériques
+- Validation des entrées côté serveur (longueurs, email, taille et structure des plans — max 5 Mo)
+- Rate limiting sur l'authentification (10 essais / 15 min) et l'API (120 req/min)
+- bcrypt à 12 rounds, secrets jamais commités, credentials docker-compose obligatoires (`${VAR:?}`)
+- Conteneur non-root, image multi-stage
 
-## 📝 Credits & License
+**Fiabilité**
+- `mysql2/promise` + async/await (fin des callbacks imbriqués)
+- Sessions persistées en MySQL (survivent au redémarrage)
+- Retry de connexion BDD au démarrage, arrêt gracieux (SIGTERM/SIGINT)
+- Bugs corrigés : variables EJS manquantes, changement de mot de passe forcé à l'inscription, staleness de session
 
-Made with ❤️ to simplify the life of network admins and DevOps.
+**Fonctionnel**
+- Suppression et renommage de plans depuis le dashboard
+- Bug reports en base (plus de fichier log), suppression en cascade des données utilisateur
+- Page d'erreur propre (404/500)

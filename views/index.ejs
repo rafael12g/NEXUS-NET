@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Nexus Net — Visualisation réseau</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/navbar') %>
+
+        <div class="hero">
+            <h1>Visualisez vos réseaux complexes</h1>
+            <p>Nexus Net est l'outil pour créer, gérer et visualiser des architectures réseau, des diagrammes de flux et des connexions complexes — avec une supervision Docker en temps réel.</p>
+
+            <div class="cta-buttons">
+                <% if (user) { %>
+                    <a href="/dashboard" class="btn btn-primary btn-small"><i class="fas fa-rocket"></i> Accéder au Dashboard</a>
+                <% } else { %>
+                    <a href="/register" class="btn btn-primary btn-small"><i class="fas fa-user-plus"></i> Commencer gratuitement</a>
+                    <a href="/login" class="btn btn-secondary btn-small"><i class="fas fa-sign-in-alt"></i> Se connecter</a>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="stats-banner">
+            <div class="stat-item">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Web</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><i class="fab fa-docker"></i></div>
+                <div class="stat-label">Docker intégré</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">HD</div>
+                <div class="stat-label">Export PDF/PNG</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-label">Sécurisé</div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h2 class="section-title">Fonctionnalités</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-project-diagram"></i></div>
+                    <div class="feature-title">Visualisation interactive</div>
+                    <div class="feature-desc">Diagrammes dynamiques en glisser-déposer : zoomez, déplacez et organisez vos nœuds sans effort.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fab fa-docker"></i></div>
+                    <div class="feature-title">Supervision Docker</div>
+                    <div class="feature-desc">Importez vos containers, suivez leur état, CPU et RAM en direct, et pilotez-les depuis le diagramme.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-file-export"></i></div>
+                    <div class="feature-title">Export multi-formats</div>
+                    <div class="feature-desc">Sauvegardez en JSON, partagez en PDF ou exportez vers Draw.io (XML).</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-server"></i></div>
+                    <div class="feature-title">Bibliothèque complète</div>
+                    <div class="feature-desc">Serveurs, routeurs, switchs, firewalls, bases de données, postes utilisateurs et images personnalisées.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-magic"></i></div>
+                    <div class="feature-title">Outils intelligents</div>
+                    <div class="feature-desc">Alignement automatique, grille aimantée et liaison rapide pour des schémas propres.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                    <div class="feature-title">Espace privé</div>
+                    <div class="feature-desc">Vos plans sont sauvegardés automatiquement dans votre espace personnel.</div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; <%= new Date().getFullYear() %> NEXUS NET — Sous licence MIT.</p>
+        </footer>
+    </div>
+</body>
+</html>

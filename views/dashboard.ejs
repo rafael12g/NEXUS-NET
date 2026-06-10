@@ -1,72 +1,44 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Nexus Net</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent-blue: <%= (theme && theme.accent) ? theme.accent : '#38bdf8' %>; }
-    </style>
+    <title>Dashboard — Nexus Net</title>
+    <%- include('partials/head') %>
 </head>
 <body>
     <div class="container">
-        <nav class="navbar">
-            <a href="/" class="logo">NEXUS NET</a>
-            <div class="nav-links">
-                <div class="dropdown">
-                    <button class="dropbtn" onclick="toggleDropdown()">
-                        Bonjour, <%= user.username %> 
-                        <span class="arrow">▼</span>
-                    </button>
-                    <div id="myDropdown" class="dropdown-content">
-                        <a href="/settings">Paramètres</a>
-                        <a href="/report-bug">Signaler un bug</a>
-                        <a href="/logout" style="color: var(--accent-red);">Déconnexion</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <script>
-            function toggleDropdown() {
-                document.getElementById("myDropdown").classList.toggle("show");
-            }
-
-            // Close the dropdown if the user clicks outside of it
-            window.onclick = function(event) {
-                if (!event.target.matches('.dropbtn') && !event.target.matches('.dropbtn *')) {
-                    var dropdowns = document.getElementsByClassName("dropdown-content");
-                    for (var i = 0; i < dropdowns.length; i++) {
-                        var openDropdown = dropdowns[i];
-                        if (openDropdown.classList.contains('show')) {
-                            openDropdown.classList.remove('show');
-                        }
-                    }
-                }
-            }
-        </script>
+        <%- include('partials/navbar') %>
 
         <div class="dashboard-header">
-            <h2>Mes Plans</h2>
+            <h2>Mes plans</h2>
             <form action="/plans/create" method="POST" style="margin: 0;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" name="name" placeholder="Nom du nouveau plan" required style="width: 200px; margin-bottom: 0;">
-                    <button type="submit" class="btn btn-primary btn-small">Créer un nouveau plan</button>
+                    <input type="text" name="name" placeholder="Nom du nouveau plan" required maxlength="100" style="width: 220px; margin-bottom: 0;">
+                    <button type="submit" class="btn btn-primary btn-small"><i class="fas fa-plus"></i> Créer</button>
                 </div>
             </form>
         </div>
 
         <div class="plans-grid">
             <% if (plans.length === 0) { %>
-                <p style="color: var(--text-secondary);">Vous n'avez aucun plan pour le moment.</p>
+                <p style="color: var(--text-secondary);">Vous n'avez aucun plan pour le moment. Créez-en un ci-dessus pour commencer.</p>
             <% } else { %>
                 <% plans.forEach(function(plan) { %>
                     <div class="plan-card">
-                        <div class="plan-title"><%= plan.name %></div>
-                        <div class="plan-date">Créé le <%= new Date(plan.created_at).toLocaleDateString() %></div>
-                        <a href="/editor/<%= plan.id %>" class="btn btn-primary btn-small">Ouvrir</a>
+                        <div>
+                            <div class="plan-title"><%= plan.name %></div>
+                            <div class="plan-date">
+                                Modifié le <%= new Date(plan.updated_at || plan.created_at).toLocaleDateString('fr-FR') %>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <a href="/editor/<%= plan.id %>" class="btn btn-primary btn-small"><i class="fas fa-pen-to-square"></i> Ouvrir</a>
+                            <form action="/plans/<%= plan.id %>/delete" method="POST" style="margin:0;"
+                                  data-confirm="Supprimer le plan « <%= plan.name %> » ? Cette action est irréversible.">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-danger btn-small" title="Supprimer"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
                     </div>
                 <% }); %>
             <% } %>

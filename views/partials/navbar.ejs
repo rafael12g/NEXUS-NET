@@ -1,0 +1,21 @@
+<nav class="navbar">
+    <a href="/" class="logo"><i class="fas fa-globe" style="color:var(--accent-green); margin-right:10px;"></i>NEXUS NET</a>
+    <div class="nav-links">
+        <% if (user) { %>
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <div class="dropdown">
+                <button class="dropbtn" data-toggle="dropdown" data-target="userMenu">
+                    <%= user.username %> <span class="arrow">▼</span>
+                </button>
+                <div id="userMenu" class="dropdown-content">
+                    <a href="/settings">Paramètres</a>
+                    <a href="/report-bug">Signaler un bug</a>
+                    <a href="/logout" style="color: var(--accent-red);">Déconnexion</a>
+                </div>
+            </div>
+        <% } else { %>
+            <a href="/login" class="nav-link">Connexion</a>
+            <a href="/register" class="nav-link">Inscription</a>
+        <% } %>
+    </div>
+</nav>

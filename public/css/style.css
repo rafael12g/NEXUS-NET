@@ -1,20 +1,19 @@
 /* --- THEME UNIVERSAL --- */
 :root {
-    --bg-color: #0b1121; /* Darker, richer background */
-    --panel-bg: rgba(30, 41, 59, 0.7); /* More transparent for glassmorphism */
+    --bg-color: #0b1121;
+    --panel-bg: rgba(30, 41, 59, 0.7);
     --panel-border: rgba(255, 255, 255, 0.1);
     --border-color: rgba(148, 163, 184, 0.2);
-    
-    /* Vibrant Gradients & Colors */
+
     --primary-gradient: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
     --secondary-gradient: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-    
-    --accent-blue: #38bdf8; 
+
+    --accent-blue: #38bdf8;
     --accent-purple: #c084fc;
     --accent-green: #4ade80;
     --accent-red: #f43f5e;
     --accent-orange: #fbbf24;
-    
+
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
@@ -29,8 +28,8 @@ body {
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%), 
+    background-image:
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
         radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
     background-attachment: fixed;
     color: var(--text-primary);
@@ -106,6 +105,33 @@ a { text-decoration: none; color: inherit; transition: color 0.2s ease; }
     width: 100%;
 }
 
+/* --- ALERTS --- */
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    border: 1px solid transparent;
+}
+
+.alert-error {
+    color: #fda4af;
+    background: rgba(244, 63, 94, 0.1);
+    border-color: rgba(244, 63, 94, 0.3);
+}
+
+.alert-success {
+    color: #86efac;
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+.alert-warning {
+    color: #fcd34d;
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
 /* --- FORMS & PANELS --- */
 .auth-container {
     max-width: 420px;
@@ -166,6 +192,12 @@ input:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 
+.field-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
 /* --- BUTTONS --- */
 .btn {
     display: inline-flex;
@@ -180,6 +212,7 @@ input:focus, textarea:focus {
     text-align: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     gap: 8px;
+    font-family: inherit;
 }
 
 .btn-primary {
@@ -189,15 +222,6 @@ input:focus, textarea:focus {
     width: 100%;
     position: relative;
     overflow: hidden;
-}
-
-.btn-primary:after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(white, transparent);
-    opacity: 0.1;
-    display: none;
 }
 
 .btn-primary:hover {
@@ -236,6 +260,8 @@ input:focus, textarea:focus {
     margin-bottom: 40px;
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .dashboard-header h2 {
@@ -259,7 +285,7 @@ input:focus, textarea:focus {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 160px;
+    min-height: 160px;
     position: relative;
     overflow: hidden;
 }
@@ -287,11 +313,19 @@ input:focus, textarea:focus {
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 8px;
+    word-break: break-word;
 }
 
 .plan-date {
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+.plan-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    align-items: center;
 }
 
 .btn-small {
@@ -330,6 +364,7 @@ input:focus, textarea:focus {
     display: flex;
     justify-content: center;
     gap: 24px;
+    flex-wrap: wrap;
 }
 
 /* --- FEATURES --- */
@@ -395,7 +430,6 @@ input:focus, textarea:focus {
     line-height: 1.7;
 }
 
-
 /* --- STATS BANNER --- */
 .stats-banner {
     background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(192, 132, 252, 0.1));
@@ -408,8 +442,6 @@ input:focus, textarea:focus {
     margin-bottom: 80px;
     border: 1px solid var(--border-color);
 }
-
-/* --- MONITORING --- */
 
 .stat-item {
     text-align: center;
@@ -453,59 +485,59 @@ input:focus, textarea:focus {
 
 /* --- DROPDOWN MENU --- */
 .dropdown {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
 }
 
 .dropbtn {
-  background-color: transparent;
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-weight: 600;
-  padding: 0;
-  font-size: inherit;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-weight: 600;
+    padding: 0;
+    font-size: inherit;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .dropbtn:hover {
-  color: var(--text-primary);
+    color: var(--text-primary);
 }
 
 .dropbtn .arrow {
-  font-size: 10px;
-  opacity: 0.7;
+    font-size: 10px;
+    opacity: 0.7;
 }
 
 .dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #1e293b; /* Fallback */
-  background-color: var(--panel-bg);
-  min-width: 180px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  z-index: 1000;
-  right: 0;
-  margin-top: 10px;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
+    display: none;
+    position: absolute;
+    background-color: #1e293b;
+    background-color: var(--panel-bg);
+    min-width: 180px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    z-index: 1000;
+    right: 0;
+    margin-top: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .dropdown-content a {
-  color: var(--text-secondary);
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-  font-size: 14px;
-  transition: all 0.2s;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  text-align: left;
+    color: var(--text-secondary);
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    text-align: left;
 }
 
 .dropdown-content a:last-child {
@@ -513,12 +545,44 @@ input:focus, textarea:focus {
 }
 
 .dropdown-content a:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-  padding-left: 20px; /* Small push effect */
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    padding-left: 20px;
 }
 
-/* Show class for JS toggle */
 .dropdown-content.show {
-  display: block;
+    display: block;
+}
+
+/* --- SECTION HEADERS (settings, etc.) --- */
+.category-header {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+/* --- ERROR PAGE --- */
+.error-page {
+    text-align: center;
+    padding: 120px 24px;
+}
+
+.error-page .code {
+    font-size: 96px;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 16px;
+}
+
+.error-page p {
+    color: var(--text-secondary);
+    font-size: 18px;
+    margin-bottom: 32px;
 }

@@ -1,44 +1,39 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription - Nexus Net</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent-blue: <%= (theme && theme.accent) ? theme.accent : '#38bdf8' %>; }
-    </style>
+    <title>Inscription — Nexus Net</title>
+    <%- include('partials/head') %>
 </head>
 <body>
     <div class="container">
-        <nav class="navbar">
-            <a href="/" class="logo">NEXUS NET</a>
-        </nav>
+        <%- include('partials/navbar') %>
 
         <div class="auth-container">
             <div class="auth-title">Créer un compte</div>
-            
+
             <% if (error) { %>
-                <div class="error-msg"><%= error %></div>
+                <div class="alert alert-error"><%= error %></div>
             <% } %>
 
             <form action="/register" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="form-group">
                     <label for="username">Nom d'utilisateur</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" required minlength="3" maxlength="30"
+                           pattern="[a-zA-Z0-9_.\-]{3,30}" autocomplete="username"
+                           title="3 à 30 caractères : lettres, chiffres, . _ -">
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="email">Email (optionnel)</label>
+                    <input type="email" id="email" name="email" autocomplete="email">
                 </div>
                 <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="password">Mot de passe (8 caractères min.)</label>
+                    <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Confirmer le mot de passe</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password">
                 </div>
                 <button type="submit" class="btn btn-primary">S'inscrire</button>
             </form>

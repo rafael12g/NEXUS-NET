@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Erreur <%= status %> — Nexus Net</title>
+    <%- include('partials/head') %>
+</head>
+<body>
+    <div class="container">
+        <%- include('partials/navbar') %>
+        <div class="auth-container" style="text-align: center;">
+            <div class="auth-title">Erreur <%= status %></div>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;"><%= message %></p>
+            <a href="<%= user ? '/dashboard' : '/' %>" class="btn btn-primary btn-small">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+</body>
+</html>
