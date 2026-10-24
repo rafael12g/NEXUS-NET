@@ -11,7 +11,7 @@ RUN npm install --omit=dev
 
 COPY . .
 
-FROM node:20-slim
+FROM node:24.22.1-slim AS runtime
 
 WORKDIR /app
 ENV NODE_ENV=production
