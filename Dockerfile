@@ -1,4 +1,4 @@
-FROM node:20-slim AS build
+FROM node:24.22.1-slim AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ build-essential \
